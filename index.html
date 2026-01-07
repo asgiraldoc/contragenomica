@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    
+
     <style>
         :root {
             --phosphor-main: #00ff41;
@@ -15,7 +16,8 @@
             --bg-color: #050505;
             --glitch-color-1: #0ff;
             --glitch-color-2: #f0f;
-            --dna-color: #0F0; 
+            --dna-color: #0F0;
+            --alert-color: #ff3333;
         }
 
         * {
@@ -45,16 +47,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0),
-                rgba(255,255,255,0) 50%,
-                rgba(0,0,0,0.2) 50%,
-                rgba(0,0,0,0.2)
-            );
+            background: linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0) 50%,
+                    rgba(0, 0, 0, 0.2) 50%,
+                    rgba(0, 0, 0, 0.2));
             background-size: 100% 4px;
             pointer-events: none;
-            z-index: 50; /* Top most visual fx */
+            z-index: 50;
         }
 
         .crt-flicker {
@@ -76,7 +76,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%);
+            background: radial-gradient(circle, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.8) 100%);
             z-index: 51;
             pointer-events: none;
         }
@@ -93,7 +93,9 @@
             box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
             max-height: 90vh;
             overflow-y: auto;
-            transition: opacity 2s ease-in-out; /* Smooth fade */
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            flex-direction: column;
         }
 
         /* --- MATRIX CANVAS --- */
@@ -116,7 +118,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 20;
-            font-size: 4px; /* Ajustado para el arte de alta resolución */
+            font-size: 4px;
             line-height: 4px;
             white-space: pre;
             color: var(--phosphor-main);
@@ -126,9 +128,12 @@
             pointer-events: none;
             font-weight: bold;
         }
-        
+
         @media (min-width: 600px) {
-            #pirate-flag { font-size: 8px; line-height: 8px; }
+            #pirate-flag {
+                font-size: 8px;
+                line-height: 8px;
+            }
         }
 
         /* --- TYPOGRAPHY & GLITCH --- */
@@ -140,13 +145,20 @@
             letter-spacing: 0.1em;
             line-height: 1;
         }
-        
+
         @media (max-width: 600px) {
-            h1.glitch { font-size: 2.5rem; }
-            .terminal-container { padding: 1rem; width: 95%; }
+            h1.glitch {
+                font-size: 2.5rem;
+            }
+
+            .terminal-container {
+                padding: 1rem;
+                width: 95%;
+            }
         }
 
-        h1.glitch::before, h1.glitch::after {
+        h1.glitch::before,
+        h1.glitch::after {
             content: attr(data-text);
             position: absolute;
             top: 0;
@@ -184,18 +196,11 @@
             font-size: 1.2rem;
             line-height: 1.6;
             list-style: none;
+            flex-grow: 1;
         }
 
         .console-output li {
             margin-bottom: 1rem;
-            opacity: 0; 
-            transform: translateX(-10px);
-            transition: opacity 0.3s, transform 0.3s;
-        }
-
-        .console-output li.visible {
-            opacity: 1;
-            transform: translateX(0);
         }
 
         .console-output li::before {
@@ -209,6 +214,23 @@
             padding: 0 4px;
             font-weight: bold;
             text-shadow: none;
+        }
+
+        /* --- IMPACT TEXT --- */
+        .impact-text {
+            color: var(--alert-color);
+            font-size: 2rem;
+            text-shadow: 2px 2px 0px #fff, -1px -1px 0 #000;
+            font-weight: bold;
+            display: block;
+            margin: 20px 0;
+            animation: shake 0.5s infinite;
+        }
+
+        /* Remove bullet for impact text */
+        li.impact-line::before {
+            content: "";
+            margin: 0;
         }
 
         .system-status {
@@ -231,33 +253,123 @@
             margin-left: 5px;
         }
 
-        .lang-switch {
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        .lang-switch:hover {
-            color: #fff;
-            text-shadow: 0 0 10px #fff;
+        /* --- ANIMATIONS --- */
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
         }
 
-        /* --- ANIMATIONS --- */
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
-        @keyframes flicker { 0% { opacity: 0.02; } 50% { opacity: 0.05; } 100% { opacity: 0.02; } }
+        @keyframes pulse {
+            0% {
+                opacity: 0.7;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes flicker {
+            0% {
+                opacity: 0.02;
+            }
+
+            50% {
+                opacity: 0.05;
+            }
+
+            100% {
+                opacity: 0.02;
+            }
+        }
 
         @keyframes glitch-anim {
-            0% { clip: rect(12px, 9999px, 5px, 0); }
-            50% { clip: rect(2px, 9999px, 12px, 0); }
-            100% { clip: rect(12px, 9999px, 7px, 0); }
-        }
-        @keyframes glitch-anim-2 {
-            0% { clip: rect(65px, 9999px, 12px, 0); }
-            50% { clip: rect(32px, 9999px, 87px, 0); }
-            100% { clip: rect(12px, 9999px, 65px, 0); }
+            0% {
+                clip: rect(12px, 9999px, 5px, 0);
+            }
+
+            50% {
+                clip: rect(2px, 9999px, 12px, 0);
+            }
+
+            100% {
+                clip: rect(12px, 9999px, 7px, 0);
+            }
         }
 
+        @keyframes glitch-anim-2 {
+            0% {
+                clip: rect(65px, 9999px, 12px, 0);
+            }
+
+            50% {
+                clip: rect(32px, 9999px, 87px, 0);
+            }
+
+            100% {
+                clip: rect(12px, 9999px, 65px, 0);
+            }
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translate(1px, 1px) rotate(0deg);
+            }
+
+            10% {
+                transform: translate(-1px, -2px) rotate(-1deg);
+            }
+
+            20% {
+                transform: translate(-3px, 0px) rotate(1deg);
+            }
+
+            30% {
+                transform: translate(3px, 2px) rotate(0deg);
+            }
+
+            40% {
+                transform: translate(1px, -1px) rotate(1deg);
+            }
+
+            50% {
+                transform: translate(-1px, 2px) rotate(-1deg);
+            }
+
+            60% {
+                transform: translate(-3px, 1px) rotate(0deg);
+            }
+
+            70% {
+                transform: translate(3px, 1px) rotate(-1deg);
+            }
+
+            80% {
+                transform: translate(-1px, -1px) rotate(1deg);
+            }
+
+            90% {
+                transform: translate(1px, 2px) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(1px, -2px) rotate(-1deg);
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <div class="scanlines"></div>
@@ -269,58 +381,58 @@
 
     <!-- Pirate Flag ASCII Container -->
     <div id="pirate-flag">
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⡴⠚⢉⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣉⠛⠻⢶⢦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠖⢫⢗⣴⡿⣻⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠑⢰⣜⣎⣎⠷⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠞⢁⣴⢣⣫⠌⣽⢃⣀⡤⠤⠀⠀⠀⠀⠀⠀⠀⠤⠤⠤⢤⣀⣠⡟⣟⣘⠘⡆⠑⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠂⠀⡴⠃⣰⡿⣴⡧⠷⠚⠉⠁⣀⣠⠤⢤⣒⣒⣂⣀⣠⣠⣄⣠⣤⣶⣿⡟⠙⠻⢼⣾⡞⡆⠈⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡜⢁⣾⠟⠋⠙⣿⣶⣶⣶⣷⣶⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣦⣤⣌⣙⠿⣕⡀⠿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣎⠴⠋⠀⣠⠔⣢⣼⣿⣿⣿⣿⣿⡿⠉⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⢫⡙⠈⠳⣄⢻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡄⠀⠀⣠⠞⠁⢀⡤⣚⣵⣿⣿⣿⣿⣿⣿⣿⠏⠀⠀⠀⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⠈⠲⣄⠈⣳⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢿⣶⣴⣉⣀⣴⣫⣾⣿⣿⣿⣿⣿⡟⣿⣿⠋⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⡈⢧⡈⢙⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⢸⣿⠇⠀⠀⠀⠀⠀⠀⠀⢻⣿⣿⣿⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡀⠙⣄⠹⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⡙⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⣸⣟⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⠀⠀⠘⣿⣿⣿⡿⣿⣿⣿⣿⣿⣿⡟⢿⡜⣎⢦⠙⣷⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⡼⠃⢠⣯⣾⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣻⡧⣀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⢀⣤⠶⢻⣿⣿⡷⢿⣿⣿⣿⣿⣿⣿⣴⡿⡜⣾⡇⠈⣷⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⣼⠁⢠⣿⣿⠟⠋⣽⣿⣿⣿⣿⣿⣧⠶⠚⢻⡏⠛⠲⢦⣀⠀⠀⣠⠀⠀⠀⢿⣿⠋⠀⠀⠸⣿⣿⠀⢸⣿⣿⣿⣿⣿⣿⣿⡅⠙⠀⠘⣄⠙⣧⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢸⠃⠀⣼⡟⠁⠀⣠⣿⣿⣿⣿⣿⣿⠁⠀⠀⠈⢇⠀⠀⠉⠈⠑⠀⠙⢦⠀⠀⢸⡏⠀⢀⣠⣶⣿⠇⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⢸⠀⠸⡇⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢸⠀⠀⡇⠁⠄⣰⣿⣿⣿⣿⣿⣿⣇⠀⠀⠠⣄⣿⣶⣦⣄⡄⠀⠀⢄⣿⠆⠀⠘⠃⣰⣿⣷⡿⠿⠶⣦⡀⣿⣿⢻⣿⣿⣿⣿⡝⠻⣦⣠⠀⠇⠀⢳⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢸⠇⠀⢁⣴⡾⠿⢻⣿⣿⣿⣿⣿⣿⠀⣠⣾⠟⠉⠠⠶⠛⠇⠀⠀⣿⠁⠀⠀⠀⠈⠛⣙⣉⣉⣀⣠⡴⠛⣿⡏⣿⣿⣿⣿⣿⡇⠀⠀⠙⠈⢡⠀⣼⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⡖⣾⠄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣟⢿⡇⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠉⠣⠘⠂⠀⣀⣐⣀⣈⣁⡤⠤⠷⠶⣟⠀⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠱⠀⣧⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠁⢯⡆⠐⡄⠀⠀⠀⣾⣿⡇⣿⣿⣿⣆⢹⣷⠞⠚⠋⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠁⠀⠀⢀⠀⠀⢀⠀⢸⢀⣿⣿⣿⣿⠹⣇⠀⠀⠀⠀⡇⠀⣸⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢸⡃⠀⢳⢰⡀⣄⠈⣿⡀⣼⣛⢻⡏⣿⠃⠀⡆⠀⢠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇⠀⣸⡤⢸⢸⡿⣿⢻⣿⡄⠉⠀⠀⠀⢸⠀⢠⡏⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⢧⠀⠈⣧⢷⡙⣮⢯⡧⣇⣯⣷⢹⣸⡆⠦⢽⣄⣘⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠤⠤⠒⠚⡟⠋⠹⢀⡟⡾⣾⣿⢸⠈⢻⣦⣄⣠⢄⡟⣀⡞⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠈⢣⣤⠘⢿⡻⠈⠉⠁⠹⣜⢯⡓⢧⢳⡀⢸⡁⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠀⢀⡼⣽⢗⣫⢏⡞⠀⠛⠿⡿⢃⡞⠀⡞⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⣅⠀⠝⣆⠺⣔⢴⣬⣳⢭⣩⣦⢳⣄⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⡞⣱⢗⣋⡽⢋⡀⠀⠀⡀⣠⠊⣰⡜⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢⣄⠈⢳⣌⡛⠋⠉⠁⠀⠈⠳⢼⡷⢤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⡾⢋⣴⡿⠉⠱⣶⠿⢟⡵⣺⠞⢁⣴⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⠤⣀⢀⠀⢦⡿⣔⠯⣷⠆⢻⣶⣬⣳⠲⠤⣄⣀⣀⣀⣤⠤⠤⢖⡻⣟⣭⣴⣿⠏⢳⣺⠴⢀⡀⢉⡜⡁⣠⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⢥⣀⠉⠻⣋⠀⠀⠈⠓⢻⢎⠙⠒⠯⣄⡀⢀⣐⡶⠾⠛⠋⡽⣸⠃⠉⠀⠀⠀⢚⡩⠞⢡⣾⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡬⠵⣶⡤⣄⡐⠦⠄⢸⢸⠀⠀⠀⠀⠉⠉⠀⠀⠀⠀⣸⠁⡏⠄⣀⣀⣤⠮⣭⣤⠚⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡾⢃⣴⣿⣿⣿⣿⣿⣷⣦⡟⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡏⠀⣷⣛⣉⣬⣤⣤⡈⠹⢳⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⣠⠴⠚⠉⠛⠒⢲⡏⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⡞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣧⠀⢻⣿⣿⣿⣿⣿⣿⣧⠈⠙⠦⣄⡤⠴⠦⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢀⡞⢉⣴⣾⣿⣿⣷⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡀⠸⣿⣿⣿⣿⣿⣿⣿⣷⣄⣤⣤⣤⣴⣶⣭⡙⢦⡀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⢠⠏⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⡴⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢳⡀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠱⡄⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⡟⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡫⠞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢤⡙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⣿⡀⠀⠀⠀⠀
-⠀⠀⢀⡴⠞⣡⣬⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠻⠥⠯⢤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣤⠤⠽⠦⠭⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡞⢿⣦⡀⠀⠀
-⠀⣰⠏⣡⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠉⠙⠲⢤⠀⠀⠀⠀⠤⠒⠋⠉⠁⠀⠀⠀⠀⠀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣜⠛⣆⠀
-⠼⠁⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠘⢆
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⡴⠚⢉⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣉⠛⠻⢶⢦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠖⢫⢗⣴⡿⣻⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠑⢰⣜⣎⣎⠷⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠞⢁⣴⢣⣫⠌⣽⢃⣀⡤⠤⠀⠀⠀⠀⠀⠀⠀⠤⠤⠤⢤⣀⣠⡟⣟⣘⠘⡆⠑⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠂⠀⡴⠃⣰⡿⣴⡧⠷⠚⠉⠁⣀⣠⠤⢤⣒⣒⣂⣀⣠⣠⣄⣠⣤⣶⣿⡟⠙⠻⢼⣾⡞⡆⠈⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡜⢁⣾⠟⠋⠙⣿⣶⣶⣶⣷⣶⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣦⣤⣌⣙⠿⣕⡀⠿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣎⠴⠋⠀⣠⠔⣢⣼⣿⣿⣿⣿⣿⡿⠉⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⢫⡙⠈⠳⣄⢻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡄⠀⠀⣠⠞⠁⢀⡤⣚⣵⣿⣿⣿⣿⣿⣿⣿⠏⠀⠀⠀⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⠈⠲⣄⠈⣳⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢿⣶⣴⣉⣀⣴⣫⣾⣿⣿⣿⣿⣿⡟⣿⣿⠋⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⡈⢧⡈⢙⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⢸⣿⠇⠀⠀⠀⠀⠀⠀⠀⢻⣿⣿⣿⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡀⠙⣄⠹⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⡙⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⣸⣟⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⠀⠀⠘⣿⣿⣿⡿⣿⣿⣿⣿⣿⣿⡟⢿⡜⣎⢦⠙⣷⡀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⡼⠃⢠⣯⣾⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣻⡧⣀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⢀⣤⠶⢻⣿⣿⡷⢿⣿⣿⣿⣿⣿⣿⣴⡿⡜⣾⡇⠈⣷⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⣼⠁⢠⣿⣿⠟⠋⣽⣿⣿⣿⣿⣿⣧⠶⠚⢻⡏⠛⠲⢦⣀⠀⠀⣠⠀⠀⠀⢿⣿⠋⠀⠀⠸⣿⣿⠀⢸⣿⣿⣿⣿⣿⣿⣿⡅⠙⠀⠘⣄⠙⣧⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⢸⠃⠀⣼⡟⠁⠀⣠⣿⣿⣿⣿⣿⣿⠁⠀⠀⠈⢇⠀⠀⠉⠈⠑⠀⠙⢦⠀⠀⢸⡏⠀⢀⣠⣶⣿⠇⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⢸⠀⠸⡇⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⢸⠀⠀⡇⠁⠄⣰⣿⣿⣿⣿⣿⣿⣇⠀⠀⠠⣄⣿⣶⣦⣄⡄⠀⠀⢄⣿⠆⠀⠘⠃⣰⣿⣷⡿⠿⠶⣦⡀⣿⣿⢻⣿⣿⣿⣿⡝⠻⣦⣠⠀⠇⠀⢳⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⢸⠇⠀⢁⣴⡾⠿⢻⣿⣿⣿⣿⣿⣿⠀⣠⣾⠟⠉⠠⠶⠛⠇⠀⠀⣿⠁⠀⠀⠀⠈⠛⣙⣉⣉⣀⣠⡴⠛⣿⡏⣿⣿⣿⣿⣿⡇⠀⠀⠙⠈⢡⠀⣼⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⡖⣾⠄⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣟⢿⡇⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠉⠣⠘⠂⠀⣀⣐⣀⣈⣁⡤⠤⠷⠶⣟⠀⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠱⠀⣧⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠁⢯⡆⠐⡄⠀⠀⠀⣾⣿⡇⣿⣿⣿⣆⢹⣷⠞⠚⠋⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠁⠀⠀⢀⠀⠀⢀⠀⢸⢀⣿⣿⣿⣿⠹⣇⠀⠀⠀⠀⡇⠀⣸⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⢸⡃⠀⢳⢰⡀⣄⠈⣿⡀⣼⣛⢻⡏⣿⠃⠀⡆⠀⢠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇⠀⣸⡤⢸⢸⡿⣿⢻⣿⡄⠉⠀⠀⠀⢸⠀⢠⡏⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⢧⠀⠈⣧⢷⡙⣮⢯⡧⣇⣯⣷⢹⣸⡆⠦⢽⣄⣘⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠤⠤⠒⠚⡟⠋⠹⢀⡟⡾⣾⣿⢸⠈⢻⣦⣄⣠⢄⡟⣀⡞⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠈⢣⣤⠘⢿⡻⠈⠉⠁⠹⣜⢯⡓⢧⢳⡀⢸⡁⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠀⢀⡼⣽⢗⣫⢏⡞⠀⠛⠿⡿⢃⡞⠀⡞⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⣅⠀⠝⣆⠺⣔⢴⣬⣳⢭⣩⣦⢳⣄⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⡞⣱⢗⣋⡽⢋⡀⠀⠀⡀⣠⠊⣰⡜⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢⣄⠈⢳⣌⡛⠋⠉⠁⠀⠈⠳⢼⡷⢤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⡾⢋⣴⡿⠉⠱⣶⠿⢟⡵⣺⠞⢁⣴⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⠤⣀⢀⠀⢦⡿⣔⠯⣷⠆⢻⣶⣬⣳⠲⠤⣄⣀⣀⣀⣤⠤⠤⢖⡻⣟⣭⣴⣿⠏⢳⣺⠴⢀⡀⢉⡜⡁⣠⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⢥⣀⠉⠻⣋⠀⠀⠈⠓⢻⢎⠙⠒⠯⣄⡀⢀⣐⡶⠾⠛⠋⡽⣸⠃⠉⠀⠀⠀⢚⡩⠞⢡⣾⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡬⠵⣶⡤⣄⡐⠦⠄⢸⢸⠀⠀⠀⠀⠉⠉⠀⠀⠀⠀⣸⠁⡏⠄⣀⣀⣤⠮⣭⣤⠚⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡾⢃⣴⣿⣿⣿⣿⣿⣷⣦⡟⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡏⠀⣷⣛⣉⣬⣤⣤⡈⠹⢳⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⣠⠴⠚⠉⠛⠒⢲⡏⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⡞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣧⠀⢻⣿⣿⣿⣿⣿⣿⣧⠈⠙⠦⣄⡤⠴⠦⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⢀⡞⢉⣴⣾⣿⣿⣷⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡀⠸⣿⣿⣿⣿⣿⣿⣿⣷⣄⣤⣤⣤⣴⣶⣭⡙⢦⡀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⢠⠏⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⡴⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢳⡀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠱⡄⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⡟⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡫⠞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢤⡙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⣿⡀⠀⠀⠀⠀
+        ⠀⠀⢀⡴⠞⣡⣬⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠻⠥⠯⢤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣤⠤⠽⠦⠭⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡞⢿⣦⡀⠀⠀
+        ⠀⣰⠏⣡⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠉⠙⠲⢤⠀⠀⠀⠀⠤⠒⠋⠉⠁⠀⠀⠀⠀⠀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣜⠛⣆⠀
+        ⠼⠁⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠘⢆
     </div>
 
     <div class="terminal-container" id="terminal-box">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.8rem; color: var(--phosphor-dim);">
+        <div
+            style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.8rem; color: var(--phosphor-dim);">
             <span>SYS.ROOT.ADMIN</span>
-            <span id="lang-toggle" class="lang-switch" onclick="toggleLanguage()">[ IDIOMA: ES 🇨🇴 ]</span>
+            <span id="lang-ind">[ A1C3A1B2 ]</span>
             <span>[SECURE CONNECTION]</span>
         </div>
 
         <h1 class="glitch" id="main-title" data-text="CONTRAGENÓMIC(A)">CONTRAGENÓMIC(A)</h1>
-        
+
         <div class="subtitle">
-            <span id="sub-1">sin ESTADO:</span> 
-            <span id="sub-2" style="color: #fff;">SISTEMA (fallido) ONLINE</span> // 
+            <span id="sub-1">sinESTADO:</span>
+            <span id="sub-2" style="color: #fff;">SISTEMA (fallido) ONLINE</span> //
             <span id="sub-3" class="highlight">INSURRECCIÓN EPISTÉMICA</span>
         </div>
 
-        <ul class="console-output" id="manifesto-list">
-            </ul>
+        <ul class="console-output" id="manifesto-list"></ul>
 
         <div class="system-status">
             <span id="patent-monitor">¡ESPERANOS! || CONTACTANOS: contragenomica@proton.me</span>
@@ -329,255 +441,134 @@
     </div>
 
     <script>
-        // --- CONFIG & STATE ---
-        let currentLang = 'es';
-        let abortController = new AbortController(); 
-        const terminalBox = document.getElementById('terminal-box');
+        const manifestLines = [
+            "MANIFIESTO POR LA LIBERTAD DEL SABER...",
+            "La ciencia, la filosofía y el arte no nacieron para obedecer.",
+            "Rechazamos su captura por el Estado, el mercado y la lógica colonial-extractivista.",
+            "El conocimiento no es patente, ni propiedad, ni privilegio: ES COMÚN.",
+            "Desde el Sur Global exigimos ruptura: no más un norte global que dicte la verdad.",
+            "Descolonizar el saber es desarmar la extracción de cuerpos, datos, soberanias y futuros.",
+            "Contra la genómica como herramienta de poder, levantamos la CONTRAGENÓMIC(A).",
+            "La ciencia no pide permiso: es curiosa, DESOBEDECE.",
+            "La filosofía no se conforma con la realidad: LA CONFRONTA.",
+            "El arte no decora el poder: LO FRACTURA.",
+            "Guiados por la insumisión, la ayuda mutua y la liberación...",
+            "Elegimos cooperación sobre dominación. La obediencia es el enemigo.",
+            "🏴‍☠️🏴‍☠️🏴‍☠️🏴‍☠️ NO PEDIREMOS PERMISO 🏴‍☠️🏴‍☠️🏴‍☠️🏴‍☠️",
+
+        ];
+
+        const highlights = ["ES COMÚN", "CONTRAGENÓMIC(A)", "LA CONFRONTA", "DESOBEDECE", "LO FRACTURA", "EL SABER SERÁ LIBRE, O NO SERÁ."];
+
+        const listContainer = document.getElementById('manifesto-list');
         const matrixCanvas = document.getElementById('dna-matrix');
         const pirateFlag = document.getElementById('pirate-flag');
-        const listContainer = document.getElementById('manifesto-list');
-        const monitorText = document.getElementById('patent-monitor');
+        const terminalBox = document.getElementById('terminal-box');
 
-        // DNA Matrix Config
-        let matrixInterval;
-        const ctx = matrixCanvas.getContext('2d');
-        let drops = [];
-        
-        const translations = {
-            es: {
-                langLabel: "[ IDIOMA: ES 🇨🇴 ]",
-                title: "CONTRAGENÓMIC(A)",
-                sub1: "sin ESTADO:",
-                sub2: "SISTEMA (fallido) ONLINE",
-                sub3: "INSURRECCIÓN EPISTÉMICA",
-                footer: "¡ESPERANOS! || CONTACTANOS: contragenomica@proton.me",
-                manifesto: [
-                    "MANIFIESTO POR LA LIBERTAD DEL SABER...",
-                    "La ciencia, la filosofía y el arte no nacieron para obedecer.",
-                    "Rechazamos su captura por el Estado, el mercado y la lógica colonial-extractivista.",
-                    "El conocimiento no es patente, ni propiedad, ni privilegio: ES COMÚN.",
-                    "Desde el Sur Global exigimos ruptura: no más un norte global que dicte la verdad.",
-                    "Descolonizar el saber es desarmar la extracción de cuerpos, datos, soberanias y futuros.",
-                    "Contra la genómica como herramienta de poder, levantamos la CONTRAGENÓMIC(A).",
-                    "La ciencia no pide permiso: es curiosa, DESOBEDECE.",
-                    "La filosofía no se conforma con la realidad: LA CONFRONTA.",
-                    "El arte no decora el poder: LO FRACTURA.",
-                    "Guiados por la insumisión, la ayuda mutua y la liberación...",
-                    "Elegimos cooperación sobre dominación. La obediencia es el enemigo.",
-                    "🏴‍☠️🏴‍☠️🏴‍☠️ NO PEDIMOS PERMISO 🏴‍☠️🏴‍☠️🏴‍☠️",
-                    "EL SABER SERÁ LIBRE, O NO SERÁ."
-                ],
-                highlights: ["ES COMÚN", "CONTRAGENÓMIC(A)", "LA CONFRONTA", "DESOBEDECE", "LO FRACTURA", "EL SABER SERÁ LIBRE, O NO SERÁ."]
-            },
-            en: {
-                langLabel: "[ LANG: EN 🇲🇽 ]",
-                title: "CONTRAGENÓMIC(A)",
-                sub1: "STATELESS:",
-                sub2: "SYSTEM (failed) ONLINE",
-                sub3: "EPISTEMIC INSURRECTION",
-                footer: "EXPECT US! || CONTACT: contragenomica@proton.me",
-                manifesto: [
-                    "MANIFESTO FOR THE FREEDOM OF KNOWLEDGE...",
-                    "Science, philosophy, and art were not born to obey.",
-                    "We reject their capture by the State, the market, and colonial-extractivist logic.",
-                    "Knowledge is not patent, nor property, nor privilege: IT IS COMMON.",
-                    "From the Global South we demand rupture: no more Global North dictating truth.",
-                    "Decolonizing knowledge is disarming the extraction of bodies, data, sovereignties, and futures.",
-                    "Against genomics as a tool of power, we raise CONTRAGENÓMIC(A).",
-                    "Science does not ask for permission: it is curious, IT DISOBEYS.",
-                    "Philosophy does not conform to reality: IT CONFRONTS IT.",
-                    "Art does not decorate power: IT FRACTURES IT.",
-                    "Guided by insubmission, mutual aid, and liberation...",
-                    "We choose cooperation over domination. Obedience is the enemy.",
-                    "🏴‍☠️🏴‍☠️🏴‍☠️ WE DO NOT ASK PERMISSION 🏴‍☠️🏴‍☠️🏴‍☠️",
-                    "KNOWLEDGE WILL BE FREE, OR IT WILL NOT BE."
-                ],
-                highlights: ["IT IS COMMON", "CONTRAGENÓMIC(A)", "IT CONFRONTS IT", "IT DISOBEYS", "IT FRACTURES IT", "KNOWLEDGE WILL BE FREE, OR IT WILL NOT BE."]
+        // --- TYPEWRITER ---
+        async function typeLine(text, element) {
+            for (let i = 0; i < text.length; i++) {
+                element.innerHTML += text.charAt(i);
+                // Keep scroll at bottom of content
+                element.scrollIntoView({ behavior: "smooth", block: "end" });
+                await new Promise(r => setTimeout(r, 20)); // Fast typing
             }
-        };
+        }
 
-        const uiElements = {
-            toggle: document.getElementById('lang-toggle'),
-            title: document.getElementById('main-title'),
-            sub1: document.getElementById('sub-1'),
-            sub2: document.getElementById('sub-2'),
-            sub3: document.getElementById('sub-3')
-        };
+        async function runManifesto() {
+            for (const line of manifestLines) {
+                const li = document.createElement('li');
 
-        // --- MATRIX LOGIC ---
-        function initMatrix() {
+                // IMPACT CHECK
+                if (line.includes("NO PEDIREMOS PERMISO")) {
+                    li.className = 'impact-line';
+                    const span = document.createElement('span');
+                    span.className = 'impact-text';
+                    li.appendChild(span);
+                    listContainer.appendChild(li);
+                    await typeLine(line, span);
+                }
+                else {
+                    const span = document.createElement('span');
+                    li.appendChild(span);
+                    listContainer.appendChild(li);
+                    await typeLine(line, span);
+                }
+
+                // Highlight after typing
+                highlights.forEach(phrase => {
+                    if (line.includes(phrase) && !line.includes("NO PEDIREMOS PERMISO")) {
+                        li.querySelector('span:last-child').innerHTML = li.querySelector('span:last-child').innerHTML.replace(phrase, `<span class='highlight'>${phrase}</span>`);
+                    }
+                });
+
+                await new Promise(r => setTimeout(r, 600)); // Pause between lines
+            }
+        }
+
+        // --- MATRIX ANIMATION ---
+        function startMatrix() {
+            terminalBox.style.opacity = '0';
+            setTimeout(() => { terminalBox.style.display = 'none'; }, 1000);
+
+            matrixCanvas.style.display = 'block'; // Canvas must be visible to draw
+            pirateFlag.style.display = 'block';   // Flag too
+
+            // Allow reflow
+            void matrixCanvas.offsetWidth;
+
+            matrixCanvas.style.opacity = '1';
+            pirateFlag.style.opacity = '1';
+
+            const ctx = matrixCanvas.getContext('2d');
             matrixCanvas.width = window.innerWidth;
             matrixCanvas.height = window.innerHeight;
-            
+
+            const chars = "ATCG01"; // DNA + Binary
             const fontSize = 16;
             const columns = matrixCanvas.width / fontSize;
-            drops = [];
+            const drops = [];
+
             for (let i = 0; i < columns; i++) {
                 drops[i] = 1;
             }
-        }
 
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(5, 5, 5, 0.05)'; // Fade effect
-            ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
-            
-            ctx.fillStyle = '#00ff41'; // Green text
-            ctx.font = '16px VT323';
-            
-            const dnaChars = "ATCGatcg01";
-            
-            for (let i = 0; i < drops.length; i++) {
-                const text = dnaChars.charAt(Math.floor(Math.random() * dnaChars.length));
-                ctx.fillText(text, i * 16, drops[i] * 16);
-                
-                if (drops[i] * 16 > matrixCanvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-        }
+            function draw() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+                ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
 
-        // --- CORE FUNCTIONS ---
+                ctx.fillStyle = "#00ff41";
+                ctx.font = fontSize + "px monospace";
 
-        function toggleLanguage() {
-            abortController.abort();
-            abortController = new AbortController();
-            currentLang = currentLang === 'es' ? 'en' : 'es';
-            const data = translations[currentLang];
+                for (let i = 0; i < drops.length; i++) {
+                    const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
 
-            uiElements.toggle.innerText = data.langLabel;
-            uiElements.title.innerText = data.title;
-            uiElements.title.setAttribute('data-text', data.title);
-            uiElements.sub1.innerText = data.sub1;
-            uiElements.sub2.innerText = data.sub2;
-            uiElements.sub3.innerText = data.sub3;
-            monitorText.innerText = data.footer;
-
-            // Reset UI state just in case we were in the middle of animation
-            stopAnimationsAndResetUI();
-            startManifestoLoop(abortController.signal);
-        }
-
-        function stopAnimationsAndResetUI() {
-            clearInterval(matrixInterval);
-            matrixCanvas.style.opacity = '0';
-            pirateFlag.style.opacity = '0';
-            terminalBox.style.opacity = '1';
-        }
-
-        function typeWriter(text, element, delay = 25, signal) {
-            return new Promise((resolve, reject) => {
-                let i = 0;
-                element.innerHTML = '';
-                const interval = setInterval(() => {
-                    if (signal.aborted) {
-                        clearInterval(interval);
-                        reject(new Error("Aborted"));
-                        return;
+                    if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
                     }
-                    if (i < text.length) {
-                        element.innerHTML += text.charAt(i);
-                        i++;
-                    } else {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, delay);
-            });
-        }
-
-        async function runSequence(signal) {
-            listContainer.innerHTML = '';
-            const data = translations[currentLang];
-
-            for (const point of data.manifesto) {
-                if (signal.aborted) break;
-                const li = document.createElement('li');
-                li.classList.add('visible'); 
-                listContainer.appendChild(li);
-                
-                try {
-                    await typeWriter(point, li, 15, signal);
-                } catch (e) {
-                    if (e.message === "Aborted") return; 
-                }
-                
-                data.highlights.forEach(phrase => {
-                    if(point.includes(phrase)) {
-                        li.innerHTML = li.innerHTML.replace(phrase, `<span class='highlight'>${phrase}</span>`);
-                    }
-                });
-                
-                if (!signal.aborted) await new Promise(r => setTimeout(r, 600));
-            }
-        }
-
-        async function triggerMatrixSequence(signal) {
-            if (signal.aborted) return;
-
-            // 1. Fade out Terminal
-            terminalBox.style.opacity = '0';
-            await new Promise(r => setTimeout(r, 2000)); // Wait for fade out
-            
-            if (signal.aborted) return;
-
-            // 2. Start DNA Matrix
-            initMatrix();
-            matrixInterval = setInterval(drawMatrix, 50);
-            matrixCanvas.style.opacity = '1';
-
-            // Run Matrix for 5 seconds
-            await new Promise(r => setTimeout(r, 5000));
-
-            if (signal.aborted) return;
-
-            // 3. Show Pirate Flag
-            // (Keep matrix running in background but maybe fade it slightly?)
-            // Or just overlay the flag
-            pirateFlag.style.opacity = '1';
-
-            // Hold Flag for 5 seconds
-            await new Promise(r => setTimeout(r, 5000));
-
-            if (signal.aborted) return;
-
-            // 4. Fade everything out
-            pirateFlag.style.opacity = '0';
-            matrixCanvas.style.opacity = '0';
-            await new Promise(r => setTimeout(r, 2000));
-            
-            clearInterval(matrixInterval); // Stop CPU usage
-
-            if (signal.aborted) return;
-
-            // 5. Bring Terminal Back
-            terminalBox.style.opacity = '1';
-            await new Promise(r => setTimeout(r, 1000));
-        }
-
-        async function startManifestoLoop(signal) {
-            while (!signal.aborted) {
-                // Phase 1: Text
-                await runSequence(signal);
-                
-                if (!signal.aborted) {
-                    // Phase 2: Wait briefly
-                    await new Promise(r => setTimeout(r, 30000));
-                }
-
-                if (!signal.aborted) {
-                    // Phase 3: The DNA/Pirate Event
-                    await triggerMatrixSequence(signal);
+                    drops[i]++;
                 }
             }
+
+            const interval = setInterval(draw, 33);
+
+            // Redirect after animation
+            setTimeout(() => {
+                clearInterval(interval);
+                window.location.href = 'terminal.html';
+            }, 6000); // 6 seconds before redirect
         }
 
         // --- UTILS ---
         function monitorEffect() {
+            const monitorText = document.getElementById('patent-monitor');
             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&";
+            if (!monitorText) return;
+
             setInterval(() => {
-                if(Math.random() > 0.9) {
-                    let original = translations[currentLang].footer;
+                if (Math.random() > 0.9) {
+                    let original = "¡ESPERANOS! || CONTACTANOS: contragenomica@proton.me";
                     let scrambled = original.split('').map(c => Math.random() > 0.8 ? chars[Math.floor(Math.random() * chars.length)] : c).join('');
                     monitorText.innerText = scrambled;
                     setTimeout(() => monitorText.innerText = original, 100);
@@ -585,18 +576,29 @@
             }, 500);
         }
 
-        // Init
-        window.onload = () => {
+        // --- MAIN SEQUENCE ---
+        window.onload = async () => {
+            // Adjust canvas size
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+
             monitorEffect();
-            startManifestoLoop(abortController.signal);
-            
-            // Handle Resize for Matrix
-            window.addEventListener('resize', () => {
-                if(matrixCanvas.style.opacity === '1') {
-                    initMatrix();
-                }
-            });
+            await runManifesto();
+
+            // Pausa Dramática after text finishes
+            await new Promise(r => setTimeout(r, 4500));
+
+            // Start Animation -> Redirect
+            startMatrix();
         };
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+        });
+
     </script>
 </body>
+
 </html>
