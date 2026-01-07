@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CONTRAGENÓMIC(A) | Insurrección Epistémica</title>
-    <!-- Importamos una fuente monoespaciada estilo terminal -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -196,6 +195,16 @@
             margin-left: 5px;
         }
 
+        /* Language Toggle Style */
+        .lang-switch {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .lang-switch:hover {
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+        }
+
         /* --- ANIMATIONS --- */
         @keyframes blink {
             0%, 100% { opacity: 1; }
@@ -269,30 +278,27 @@
 </head>
 <body>
 
-    <!-- Visual Effects Overlays -->
     <div class="scanlines"></div>
     <div class="crt-flicker"></div>
     <div class="vignette"></div>
 
     <div class="terminal-container">
-        <!-- System Header -->
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.8rem; color: var(--phosphor-dim);">
             <span>SYS.ROOT.ADMIN</span>
-            <span>IP: HIDDEN_VIA_PROXY</span>
+            <span id="lang-toggle" class="lang-switch" onclick="toggleLanguage()">[ IDIOMA: ES ]</span>
             <span>[SECURE CONNECTION]</span>
         </div>
 
-        <!-- Glitch Title -->
-        <h1 class="glitch" data-text="CONTRAGENÓMIC(A)">CONTRAGENÓMIC(A)</h1>
+        <h1 class="glitch" id="main-title" data-text="CONTRAGENÓMIC(A)">CONTRAGENÓMIC(A)</h1>
         
         <div class="subtitle">
-            sin ESTADO: <span style="color: #fff;">SISTEMA (fallido) ONLINE</span> // <span class="highlight">INSURRECCIÓN EPISTÉMICA</span>
+            <span id="sub-1">sin ESTADO:</span> 
+            <span id="sub-2" style="color: #fff;">SISTEMA (fallido) ONLINE</span> // 
+            <span id="sub-3" class="highlight">INSURRECCIÓN EPISTÉMICA</span>
         </div>
 
-        <!-- Manifesto Area -->
         <ul class="console-output" id="manifesto-list">
-            <!-- Content injected via JS for typing effect -->
-        </ul>
+            </ul>
 
         <div class="system-status">
             <span id="patent-monitor">¡ESPERANOS! || CONTACTANOS: contragenomica@proton.me</span>
@@ -301,33 +307,113 @@
     </div>
 
     <script>
-        // Data Configuration
-        const manifestoPoints = [
-            "MANIFIESTO POR LA LIBERTAD DEL SABER...",
-            "La ciencia, la filosofía y el arte no nacieron para obedecer.",
-            "Rechazamos su captura por el Estado, el mercado y la lógica colonial-extractivista.",
-            "El conocimiento no es patente, ni propiedad, ni privilegio: ES COMÚN.",
-            "Desde el Sur Global exigimos ruptura: no más un norte global que dicte la verdad.",
-            "Descolonizar el saber es desarmar la extracción de cuerpos, datos, soberanias y futuros.",
-            "Contra la genómica como herramienta de poder, levantamos la CONTRAGENÓMIC(A).",
-            "La ciencia no pide permiso: es curiosa, DESOBEDECE.",
-            "La filosofía no se conforma con la realidad: LA CONFRONTA.",
-            "El arte no decora el poder: LO FRACTURA.",
-            "Guiados por la insumisión, la ayuda mutua y la liberación...",
-            "Elegimos cooperación sobre dominación. La obediencia es el enemigo.",
-            "🏴‍☠️🏴‍☠️🏴‍☠️ NO PEDIMOS PERMISO 🏴‍☠️🏴‍☠️🏴‍☠️",
-            "EL SABER SERÁ LIBRE, O NO SERÁ."
-        ];
+        // --- TRANSLATION DATA ---
+        let currentLang = 'es';
+        let abortController = new AbortController(); // To stop typing when switching language
+
+        const translations = {
+            es: {
+                langLabel: "[ IDIOMA: ES ]",
+                title: "CONTRAGENÓMIC(A)",
+                sub1: "sin ESTADO:",
+                sub2: "SISTEMA (fallido) ONLINE",
+                sub3: "INSURRECCIÓN EPISTÉMICA",
+                footer: "¡ESPERANOS! || CONTACTANOS: contragenomica@proton.me",
+                manifesto: [
+                    "MANIFIESTO POR LA LIBERTAD DEL SABER...",
+                    "La ciencia, la filosofía y el arte no nacieron para obedecer.",
+                    "Rechazamos su captura por el Estado, el mercado y la lógica colonial-extractivista.",
+                    "El conocimiento no es patente, ni propiedad, ni privilegio: ES COMÚN.",
+                    "Desde el Sur Global exigimos ruptura: no más un norte global que dicte la verdad.",
+                    "Descolonizar el saber es desarmar la extracción de cuerpos, datos, soberanias y futuros.",
+                    "Contra la genómica como herramienta de poder, levantamos la CONTRAGENÓMIC(A).",
+                    "La ciencia no pide permiso: es curiosa, DESOBEDECE.",
+                    "La filosofía no se conforma con la realidad: LA CONFRONTA.",
+                    "El arte no decora el poder: LO FRACTURA.",
+                    "Guiados por la insumisión, la ayuda mutua y la liberación...",
+                    "Elegimos cooperación sobre dominación. La obediencia es el enemigo.",
+                    "🏴‍☠️🏴‍☠️🏴‍☠️ NO PEDIMOS PERMISO 🏴‍☠️🏴‍☠️🏴‍☠️",
+                    "EL SABER SERÁ LIBRE, O NO SERÁ."
+                ],
+                highlights: ["ES COMÚN", "CONTRAGENÓMIC(A)", "LA CONFRONTA", "DESOBEDECE", "LO FRACTURA", "EL SABER SERÁ LIBRE, O NO SERÁ."]
+            },
+            en: {
+                langLabel: "[ LANG: EN ]",
+                title: "CONTRAGENÓMIC(A)",
+                sub1: "STATELESS:",
+                sub2: "SYSTEM (failed) ONLINE",
+                sub3: "EPISTEMIC INSURRECTION",
+                footer: "EXPECT US! || CONTACT: contragenomica@proton.me",
+                manifesto: [
+                    "MANIFESTO FOR THE FREEDOM OF KNOWLEDGE...",
+                    "Science, philosophy, and art were not born to obey.",
+                    "We reject their capture by the State, the market, and colonial-extractivist logic.",
+                    "Knowledge is not patent, nor property, nor privilege: IT IS COMMON.",
+                    "From the Global South we demand rupture: no more Global North dictating truth.",
+                    "Decolonizing knowledge is disarming the extraction of bodies, data, sovereignties, and futures.",
+                    "Against genomics as a tool of power, we raise CONTRAGENÓMIC(A).",
+                    "Science does not ask for permission: it is curious, IT DISOBEYS.",
+                    "Philosophy does not conform to reality: IT CONFRONTS IT.",
+                    "Art does not decorate power: IT FRACTURES IT.",
+                    "Guided by insubmission, mutual aid, and liberation...",
+                    "We choose cooperation over domination. Obedience is the enemy.",
+                    "🏴‍☠️🏴‍☠️🏴‍☠️ WE DO NOT ASK PERMISSION 🏴‍☠️🏴‍☠️🏴‍☠️",
+                    "KNOWLEDGE WILL BE FREE, OR IT WILL NOT BE."
+                ],
+                highlights: ["IT IS COMMON", "CONTRAGENÓMIC(A)", "IT CONFRONTS IT", "IT DISOBEYS", "IT FRACTURES IT", "KNOWLEDGE WILL BE FREE, OR IT WILL NOT BE."]
+            }
+        };
 
         const listContainer = document.getElementById('manifesto-list');
         const monitorText = document.getElementById('patent-monitor');
+        
+        // Elementos estáticos
+        const uiElements = {
+            toggle: document.getElementById('lang-toggle'),
+            title: document.getElementById('main-title'),
+            sub1: document.getElementById('sub-1'),
+            sub2: document.getElementById('sub-2'),
+            sub3: document.getElementById('sub-3')
+        };
 
-        // Typing Effect Function
-        function typeWriter(text, element, delay = 25) {
-            return new Promise(resolve => {
+        // --- FUNCTIONS ---
+
+        function toggleLanguage() {
+            // Detener cualquier escritura en progreso
+            abortController.abort();
+            abortController = new AbortController();
+
+            // Cambiar idioma
+            currentLang = currentLang === 'es' ? 'en' : 'es';
+            const data = translations[currentLang];
+
+            // Actualizar textos estáticos
+            uiElements.toggle.innerText = data.langLabel;
+            
+            uiElements.title.innerText = data.title;
+            uiElements.title.setAttribute('data-text', data.title); // Para el efecto glitch CSS
+            
+            uiElements.sub1.innerText = data.sub1;
+            uiElements.sub2.innerText = data.sub2;
+            uiElements.sub3.innerText = data.sub3;
+            monitorText.innerText = data.footer;
+
+            // Reiniciar manifiesto
+            startManifestoLoop(abortController.signal);
+        }
+
+        function typeWriter(text, element, delay = 25, signal) {
+            return new Promise((resolve, reject) => {
                 let i = 0;
                 element.innerHTML = '';
+                
                 const interval = setInterval(() => {
+                    if (signal.aborted) {
+                        clearInterval(interval);
+                        reject(new Error("Aborted"));
+                        return;
+                    }
+
                     if (i < text.length) {
                         element.innerHTML += text.charAt(i);
                         i++;
@@ -339,38 +425,44 @@
             });
         }
 
-        // Sequence Runner
-        async function runSequence() {
-            for (const point of manifestoPoints) {
+        async function runSequence(signal) {
+            listContainer.innerHTML = ''; // Limpiar pantalla
+            const data = translations[currentLang];
+
+            for (const point of data.manifesto) {
+                if (signal.aborted) break;
+
                 const li = document.createElement('li');
                 li.classList.add('visible'); 
                 listContainer.appendChild(li);
                 
-                // Simple typewriter simulation
-                await typeWriter(point, li, 15);
-                
-                // Post-processing for highlights based on new manifesto
-                if(point.includes("ES COMÚN")) {
-                    li.innerHTML = point.replace("ES COMÚN", "<span class='highlight'>ES COMÚN</span>");
-                }
-                if(point.includes("CONTRAGENÓMIC(A)")) {
-                    li.innerHTML = point.replace("CONTRAGENÓMIC(A)", "<span class='highlight'>CONTRAGENÓMIC(A)</span>");
-                }
-                if(point.includes("LA CONFRONTA")) {
-                    li.innerHTML = point.replace("LA CONFRONTA", "<span class='highlight'>LA CONFRONTA</span>");
-                }
-                if(point.includes("DESOBEDECE")) {
-                    li.innerHTML = point.replace("DESOBEDECE", "<span class='highlight'>DESOBEDECE</span>");
-                }
-                if(point.includes("LO FRACTURA")) {
-                    li.innerHTML = point.replace("LO FRACTURA", "<span class='highlight'>LO FRACTURA</span>");
-                }
-                if(point.includes("EL SABER SERÁ LIBRE")) {
-                    li.innerHTML = point.replace("EL SABER SERÁ LIBRE, O NO SERÁ.", "<span class='highlight'>EL SABER SERÁ LIBRE, O NO SERÁ.</span>");
+                try {
+                    await typeWriter(point, li, 15, signal);
+                } catch (e) {
+                    if (e.message === "Aborted") return; // Salir limpiamente
                 }
                 
-                // Pause lengths adjusted for reading rhythm
-                await new Promise(r => setTimeout(r, 600));
+                // Aplicar highlights dinámicamente según el idioma actual
+                data.highlights.forEach(phrase => {
+                    if(point.includes(phrase)) {
+                        li.innerHTML = li.innerHTML.replace(phrase, `<span class='highlight'>${phrase}</span>`);
+                    }
+                });
+                
+                // Pausa entre líneas
+                if (!signal.aborted) {
+                    await new Promise(r => setTimeout(r, 600));
+                }
+            }
+        }
+
+        async function startManifestoLoop(signal) {
+            while (!signal.aborted) {
+                await runSequence(signal);
+                // Espera larga antes de reiniciar el bucle
+                if (!signal.aborted) {
+                    await new Promise(r => setTimeout(r, 60000));
+                }
             }
         }
 
@@ -378,9 +470,8 @@
         function monitorEffect() {
             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&";
             setInterval(() => {
-                // Occasional text scramble on the footer
                 if(Math.random() > 0.9) {
-                    let original = "¡ESPERANOS! || CONTACTANOS: contragenomica@proton.me";
+                    let original = translations[currentLang].footer;
                     let scrambled = original.split('').map(c => Math.random() > 0.8 ? chars[Math.floor(Math.random() * chars.length)] : c).join('');
                     monitorText.innerText = scrambled;
                     setTimeout(() => monitorText.innerText = original, 100);
@@ -388,18 +479,10 @@
             }, 500);
         }
 
-        // Start Loop
-        window.onload = async () => {
-            monitorEffect(); // Inicia el efecto de glitch del monitor (corre en paralelo)
-            
-            // Bucle infinito para reiniciar el manifiesto
-            while(true) {
-                listContainer.innerHTML = ''; // Limpia la pantalla antes de empezar
-                await runSequence(); // Ejecuta la escritura
-                
-                // Espera 30 segundos (30000 milisegundos) antes de reiniciar
-                await new Promise(resolve => setTimeout(resolve, 60000));
-            }
+        // Init
+        window.onload = () => {
+            monitorEffect();
+            startManifestoLoop(abortController.signal);
         };
     </script>
 </body>
