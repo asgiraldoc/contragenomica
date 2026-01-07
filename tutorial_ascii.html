@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CONTRAGENÓMICA: Protocolo de Acceso</title>
+    <style>
+        body {
+            background-color: #050505;
+            color: #00ff41;
+            /* Verde fósforo clásico */
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #container {
+            display: flex;
+            width: 95%;
+            max-width: 1200px;
+            height: 80vh;
+            border: 1px solid #333;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            background-color: #0a0a0a;
+        }
+
+        /* --- COLUMNA IZQUIERDA (SIDEBAR) --- */
+        #sidebar {
+            width: 22%;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            /* Apila ADN arriba y Botón abajo */
+        }
+
+        #dna-stream {
+            flex-grow: 1;
+            /* Ocupa todo el espacio disponible */
+            overflow: hidden;
+            font-size: 11px;
+            line-height: 11px;
+            text-align: center;
+            opacity: 0.7;
+            white-space: pre;
+            color: #008F11;
+            padding-top: 10px;
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            /* Desvanece el final */
+        }
+
+        /* ESTILOS DEL BOTÓN MAKIA */
+        #access-btn {
+            height: 60px;
+            width: 100%;
+            background-color: #000;
+            color: #00ff41;
+            border: none;
+            border-top: 1px solid #333;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            outline: none;
+        }
+
+        #access-btn:hover {
+            background-color: #00ff41;
+            color: #000;
+            box-shadow: 0 0 30px #00ff41;
+            /* El brillo radioactivo */
+            text-shadow: none;
+        }
+
+        #access-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* --- COLUMNA DERECHA (TERMINAL) --- */
+        #terminal {
+            width: 78%;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .line {
+            margin-bottom: 20px;
+            display: block;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .highlight {
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 0 0 5px #fff;
+        }
+
+        .citation {
+            color: #ff0055;
+            font-style: italic;
+            display: block;
+            margin-top: 5px;
+            font-size: 0.9em;
+            border-left: 2px solid #ff0055;
+            padding-left: 10px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background-color: #00ff41;
+            animation: blink 1s infinite;
+        }
+
+        /* Scrollbar hacker style */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container">
+
+        <div id="sidebar">
+            <div id="dna-stream"></div>
+            <button id="access-btn" onclick="goToTool()">
+                > HAZ ASCII ART
+            </button>
+        </div>
+
+        <div id="terminal">
+            <div id="output"></div>
+            <span class="cursor"></span>
+        </div>
+    </div>
+
+    <script>
+        // --- FUNCIÓN DEL BOTÓN ---
+        function goToTool() {
+            // CAMBIA ESTE LINK POR EL DE TU HERRAMIENTA REAL
+            window.location.href = "ascii_tool.html";
+            // O si es un archivo local: "tool.html"
+        }
+
+        // --- LÓGICA 1: GENERADOR DE ADN ASCII ---
+        const helixFrames = [
+            "   A===T   ", "  G=====C  ", " C=======G ", "T=========A",
+            " G=======C ", "  A=====T  ", "   C===G   ", "    T=A    ",
+            "   G===C   ", "  A=====T  ", " C=======G ", "T=========A",
+            " G=======C ", "  A=====T  ", "   C===G   ", "    T=A    "
+        ];
+
+        let frameIndex = 0;
+        const dnaContainer = document.getElementById('dna-stream');
+
+        function renderDNA() {
+            const div = document.createElement('div');
+            div.innerText = helixFrames[frameIndex];
+            // Usamos prepend para que caiga desde arriba o append para que suba
+            dnaContainer.prepend(div);
+
+            // Limpieza de memoria (borra los viejos)
+            if (dnaContainer.children.length > 60) {
+                dnaContainer.removeChild(dnaContainer.lastChild);
+            }
+            frameIndex = (frameIndex + 1) % helixFrames.length;
+        }
+
+        setInterval(renderDNA, 100);
+
+        // --- LÓGICA 2: EL MANIFIESTO ---
+        const content = [
+            {
+                text: "> INICIANDO CONEXIÓN SSH... [CONTRAGENOMICS_NODE_01]",
+                type: "system"
+            },
+            {
+                text: "> CARGANDO MÓDULO: INTERPRETACIÓN DE CÓDIGO...",
+                type: "system"
+            },
+            {
+                text: "OBSERVACIÓN PRELIMINAR: EL TEXTO ES MATERIA VIVA.",
+                type: "header"
+            },
+            {
+                text: "Mira a tu izquierda. Eso no es solo arte ASCII. Es la representación más fiel de la realidad biológica. Antes de que existiera el silicio, existía el nucleótido. La vida es un script ejecutable escrito en código cuaternario (A, C, G, T).",
+                type: "text"
+            },
+            {
+                text: "Pero el sistema actual intenta compilar este código con derechos de autor restrictivos. Intentan cerrar la fuente (closed-source) de la naturaleza misma.",
+                type: "text"
+            },
+            {
+                text: "ARGUMENTO 1: LA FALACIA DE LA COMPETENCIA",
+                type: "header"
+            },
+            {
+                text: "Nos enseñaron que la evolución es una guerra corporativa, donde únicamente el más apto sobrevive. No es así. Por ejemplo, la célula eucariota, la base de tu existencia, no nació de la conquista, sino de la fusión cooperativa (endosimbiosis).",
+                type: "text"
+            },
+            {
+                text: "\"La vida no conquistó el globo mediante el combate, sino a través de la interconexión.\"",
+                citation: "— Lynn Margulis, 'Symbiotic Planet'. Teoría de la Endosimbiosis.",
+                type: "quote"
+            },
+            {
+                text: "ARGUMENTO 2: EL APOYO MUTUO COMO LEY NATURAL",
+                type: "header"
+            },
+            {
+                text: "Si desciframos el genoma, no encontramos patentes ni propiedad privada. Encontramos una historia de colaboración colectiva de 3.800 millones de años. El anarquismo biológico es la norma, no la excepción.",
+                type: "text"
+            },
+            {
+                text: "\"La sociabilidad es tanto una ley de la naturaleza como la lucha mutua... la ayuda mutua es el factor más importante de la evolución.\"",
+                citation: "— Piotr Kropotkin, 'El Apoyo Mutuo: Un factor de la evolución' (1902).",
+                type: "quote"
+            },
+            {
+                text: "CONCLUSIÓN: EL IMPERATIVO DEL CÓDIGO ABIERTO",
+                type: "header"
+            },
+            {
+                text: "Nuestra misión como bio-hackers no es solo leer el código, es mantenerlo libre. Permitir que el conocimiento sea cercado por muros de pago es un acto de violencia epistémica.",
+                type: "text"
+            },
+            {
+                text: "\"No hay justicia en seguir leyes injustas. Es hora de salir a la luz y, en la gran tradición de la desobediencia civil, declarar nuestra oposición a este robo privado de la cultura pública.\"",
+                citation: "— Aaron Swartz, 'Manifiesto por la Guerrilla del Acceso Abierto' (2008).",
+                type: "quote"
+            },
+            {
+                text: "> PROCESO TERMINADO. TU TURNO. ¿QUÉ HARÁS CON EL CÓDIGO?",
+                type: "system"
+            }
+        ];
+
+        const outputDiv = document.getElementById('output');
+        let lineIndex = 0;
+
+        function typeWriter() {
+            if (lineIndex < content.length) {
+                const data = content[lineIndex];
+                const p = document.createElement('div');
+                p.classList.add('line');
+
+                if (data.type === 'header') {
+                    p.innerHTML = `<span class="highlight">root@bio-anarchy:~#</span> ${data.text}`;
+                    p.style.marginTop = "25px";
+                } else if (data.type === 'quote') {
+                    p.innerHTML = `${data.text}<span class="citation">${data.citation}</span>`;
+                } else if (data.type === 'system') {
+                    p.style.color = "#008F11";
+                    p.style.fontSize = "0.8em";
+                    p.innerText = data.text;
+                } else {
+                    p.innerText = data.text;
+                }
+
+                outputDiv.appendChild(p);
+
+                // Auto-scroll
+                const terminal = document.getElementById('terminal');
+                terminal.scrollTop = terminal.scrollHeight;
+
+                lineIndex++;
+                const delay = Math.random() * 600 + 300;
+                setTimeout(typeWriter, delay);
+            }
+        }
+
+        setTimeout(typeWriter, 1000);
+    </script>
+</body>
+
+</html>

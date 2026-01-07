@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONTRAGENÓMICA // SISTEMA</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #000000;
+            --color-primary: #00ff41;
+            --color-secondary: #008f11;
+            --scanline-color: rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-primary);
+            font-family: 'VT323', monospace;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            text-shadow: 0 0 5px var(--color-secondary);
+        }
+
+        /* --- CRT FX --- */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--scanline-color) 50%, rgba(0, 0, 0, 0) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* --- LAYOUT --- */
+        #top-bar {
+            border-bottom: 2px solid var(--color-primary);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        #main-display {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 1.3rem;
+        }
+
+        .output-line {
+            margin-bottom: 8px;
+        }
+
+        .system {
+            color: #ffff33;
+        }
+
+        .error {
+            color: #ff3333;
+        }
+
+        /* Clickable Commands */
+        .cmd-link {
+            cursor: pointer;
+            text-decoration: underline;
+            color: var(--color-primary);
+            transition: all 0.2s;
+        }
+
+        .cmd-link:hover {
+            background-color: var(--color-primary);
+            color: var(--color-bg);
+            text-decoration: none;
+        }
+
+        #input-area {
+            border-top: 1px solid var(--color-secondary);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        #prompt {
+            margin-right: 10px;
+        }
+
+        #command-input {
+            background: transparent;
+            border: none;
+            color: var(--color-primary);
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            flex-grow: 1;
+            outline: none;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scanlines"></div>
+
+    <div id="top-bar">
+        <span>SYS.ROOT.ADMIN</span>
+        <span id="clock">00:00:00</span>
+    </div>
+
+    <div id="main-display">
+        <div class="output-line system">CONEXIÓN ESTABLECIDA.</div>
+        <div class="output-line">BIENVENIDO A CONTRAGENÓMIC(A) OS v4.2.0</div>
+        <br>
+        <div class="output-line">MENÚ PRINCIPAL (Click o Escriba):</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('ARCHIVO_SEMILLA')">ARCHIVO_SEMILLA</span>
+            :: Información del Proyecto</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('PROPAGANDA')">PROPAGANDA</span> ::
+            Generador ASCII (DNA Mode)</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('BIO_LAB')">BIO_LAB</span> :: [RESTRINGIDO]
+        </div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('LOGOUT')">LOGOUT</span> :: Abortar el
+            Sistema</div>
+        <br>
+        <div class="output-line">Escriba 'help' para ayuda.</div>
+        <br>
+    </div>
+
+    <div id="input-area">
+        <span id="prompt">root@contragenomica:~$</span>
+        <input type="text" id="command-input" autofocus autocomplete="off">
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('es-ES', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const input = document.getElementById('command-input');
+        const display = document.getElementById('main-display');
+
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                const cmd = this.value.trim().toUpperCase();
+                if (cmd) {
+                    printLine(`root@contragenomica:~$ ${cmd}`, '');
+                    processCommand(cmd);
+                }
+                this.value = '';
+                scrollToBottom();
+            }
+        });
+
+        // Click to focus
+        document.addEventListener('click', () => input.focus());
+
+        function execute(cmd) {
+            printLine(`root@contragenomica:~$ ${cmd}`, '');
+            processCommand(cmd);
+        }
+
+        function printLine(text, type = 'output-line') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = text; // innerHTML to allow styling if passed
+            display.appendChild(div);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            display.scrollTop = display.scrollHeight;
+        }
+
+        function processCommand(rawCmd) {
+            // Remove slash if present
+            let cmd = rawCmd.startsWith('/') ? rawCmd.substring(1) : rawCmd;
+
+            switch (cmd) {
+                case 'help':
+                case '?':
+                    printLine('COMANDOS DISPONIBLES: ARCHIVO_SEMILLA, PROPAGANDA, BIO_LAB, LOGOUT, CLEAR', 'system');
+                    break;
+                case 'ARCHIVO_SEMILLA':
+                    printLine('ACCEDIENDO A ARCHIVO SEMILLA...', 'system');
+                    setTimeout(() => window.location.href = 'archivo_semilla.html', 800);
+                    break;
+                case 'PROPAGANDA':
+                    printLine('INICIANDO GENERADOR DE ARTE ADN...', 'system');
+                    setTimeout(() => window.location.href = 'propaganda.html', 800);
+                    break;
+                case 'BIO_LAB':
+                    printLine('ERROR 403: ACCESO DENEGADO. EN CONSTRUCCIÓN.', 'error');
+                    break;
+                case 'LOGOUT':
+                    printLine('CERRANDO SESIÓN...', 'system');
+                    setTimeout(() => window.location.href = 'index.html', 1000);
+                    break;
+                case 'CLEAR':
+                case 'CLS':
+                    display.innerHTML = '';
+                    break;
+                default:
+                    printLine(`Comando no reconocido: ${cmd}`, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>
