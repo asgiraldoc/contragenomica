@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONTRAGENÓMICA | Insurrección del Dato</title>
+    <!-- Importamos una fuente monoespaciada estilo terminal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --phosphor-main: #00ff41;
+            --phosphor-dim: #008f11;
+            --bg-color: #050505;
+            --glitch-color-1: #0ff;
+            --glitch-color-2: #f0f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--phosphor-main);
+            font-family: 'VT323', monospace;
+            height: 100vh;
+            overflow: hidden; /* Evita scrollbars nativos, usaremos uno interno si es necesario */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-shadow: 0 0 2px var(--phosphor-dim), 0 0 8px var(--phosphor-main);
+            position: relative;
+        }
+
+        /* --- CRT EFFECT LAYERS --- */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .crt-flicker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 16, 16, 0.1);
+            opacity: 0;
+            z-index: 10;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%);
+            z-index: 11;
+            pointer-events: none;
+        }
+
+        /* --- LAYOUT --- */
+        .terminal-container {
+            width: 90%;
+            max-width: 800px;
+            border: 1px solid var(--phosphor-dim);
+            padding: 2rem;
+            position: relative;
+            z-index: 5;
+            background: rgba(0, 20, 0, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* --- TYPOGRAPHY & GLITCH --- */
+        h1.glitch {
+            font-size: 4rem;
+            text-transform: uppercase;
+            position: relative;
+            margin-bottom: 1rem;
+            letter-spacing: 0.1em;
+            line-height: 1;
+        }
+        
+        /* Mobile adjust */
+        @media (max-width: 600px) {
+            h1.glitch { font-size: 2.5rem; }
+            .terminal-container { padding: 1rem; width: 95%; }
+        }
+
+        h1.glitch::before, h1.glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+        }
+
+        h1.glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 var(--glitch-color-1);
+            clip: rect(24px, 550px, 90px, 0);
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        h1.glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 var(--glitch-color-2);
+            clip: rect(85px, 550px, 140px, 0);
+            animation: glitch-anim 2.5s infinite linear alternate-reverse;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            border-bottom: 1px dashed var(--phosphor-main);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            width: 100%;
+        }
+
+        /* --- MANIFESTO LIST --- */
+        .console-output {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            list-style: none;
+        }
+
+        .console-output li {
+            margin-bottom: 1rem;
+            opacity: 0; /* Hidden by default for JS typing effect */
+            transform: translateX(-10px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .console-output li.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .console-output li::before {
+            content: "> ";
+            color: var(--phosphor-dim);
+        }
+
+        .highlight {
+            background: var(--phosphor-main);
+            color: var(--bg-color);
+            padding: 0 4px;
+            font-weight: bold;
+            text-shadow: none;
+        }
+
+        .system-status {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            border-top: 1px solid var(--phosphor-dim);
+            padding-top: 1rem;
+            display: flex;
+            justify-content: space-between;
+            animation: pulse 2s infinite;
+        }
+
+        .blink-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2rem;
+            background: var(--phosphor-main);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.02; }
+            5% { opacity: 0.05; }
+            10% { opacity: 0.01; }
+            15% { opacity: 0.06; }
+            20% { opacity: 0.02; }
+            25% { opacity: 0.02; }
+            30% { opacity: 0.02; }
+            35% { opacity: 0.01; }
+            40% { opacity: 0.02; }
+            45% { opacity: 0.02; }
+            50% { opacity: 0.02; }
+            55% { opacity: 0.05; }
+            60% { opacity: 0.02; }
+            65% { opacity: 0.04; }
+            70% { opacity: 0.02; }
+            75% { opacity: 0.02; }
+            80% { opacity: 0.02; }
+            85% { opacity: 0.01; }
+            90% { opacity: 0.02; }
+            95% { opacity: 0.02; }
+            100% { opacity: 0.02; }
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(12px, 9999px, 5px, 0); }
+            5% { clip: rect(87px, 9999px, 96px, 0); }
+            10% { clip: rect(34px, 9999px, 12px, 0); }
+            15% { clip: rect(6px, 9999px, 83px, 0); }
+            20% { clip: rect(67px, 9999px, 12px, 0); }
+            25% { clip: rect(32px, 9999px, 9px, 0); }
+            30% { clip: rect(1px, 9999px, 66px, 0); }
+            35% { clip: rect(44px, 9999px, 4px, 0); }
+            40% { clip: rect(98px, 9999px, 32px, 0); }
+            45% { clip: rect(21px, 9999px, 88px, 0); }
+            50% { clip: rect(2px, 9999px, 12px, 0); }
+            55% { clip: rect(76px, 9999px, 54px, 0); }
+            60% { clip: rect(32px, 9999px, 98px, 0); }
+            65% { clip: rect(54px, 9999px, 12px, 0); }
+            70% { clip: rect(87px, 9999px, 32px, 0); }
+            75% { clip: rect(12px, 9999px, 65px, 0); }
+            80% { clip: rect(45px, 9999px, 12px, 0); }
+            85% { clip: rect(87px, 9999px, 54px, 0); }
+            90% { clip: rect(21px, 9999px, 32px, 0); }
+            95% { clip: rect(65px, 9999px, 12px, 0); }
+            100% { clip: rect(12px, 9999px, 7px, 0); }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(65px, 9999px, 12px, 0); }
+            20% { clip: rect(12px, 9999px, 54px, 0); }
+            40% { clip: rect(87px, 9999px, 32px, 0); }
+            60% { clip: rect(32px, 9999px, 87px, 0); }
+            80% { clip: rect(54px, 9999px, 12px, 0); }
+            100% { clip: rect(12px, 9999px, 65px, 0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Visual Effects Overlays -->
+    <div class="scanlines"></div>
+    <div class="crt-flicker"></div>
+    <div class="vignette"></div>
+
+    <div class="terminal-container">
+        <!-- System Header -->
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.8rem; color: var(--phosphor-dim);">
+            <span>SYS.ROOT.ADMIN</span>
+            <span>IP: HIDDEN_VIA_PROXY</span>
+            <span>[SECURE CONNECTION]</span>
+        </div>
+
+        <!-- Glitch Title -->
+        <h1 class="glitch" data-text="CONTRAGENÓMICA">CONTRAGENÓMICA</h1>
+        
+        <div class="subtitle">
+            ESTADO: <span style="color: #fff;">SISTEMA ONLINE</span> // <span class="highlight">INSURRECCIÓN DEL DATO</span>
+        </div>
+
+        <!-- Manifesto Area -->
+        <ul class="console-output" id="manifesto-list">
+            <!-- Content injected via JS for typing effect -->
+        </ul>
+
+        <div class="system-status">
+            <span id="patent-monitor">¡ESPERANOS!</span>
+            <span>V.4.2.0 <span class="blink-cursor"></span></span>
+        </div>
+    </div>
+
+    <script>
+        // Data Configuration
+        const manifestoPoints = [
+            "CARGANDO: MANIFIESTO POR LA LIBERTAD DEL SABER...",
+            "La ciencia, la filosofía y el arte no nacieron para obedecer.",
+            "Rechazamos su captura por el Estado, el mercado y la lógica colonial.",
+            "El conocimiento no es patente ni privilegio: ES COMÚN.",
+            "Desde el Sur Global exigimos ruptura: no más centros que dictan verdad.",
+            "Descolonizar el saber es desarmar la extracción de cuerpos, datos y futuros.",
+            "Contra la genómica como control, levantamos la CONTRAGENÓMICA.",
+            "La ciencia sirve a la vida, no a la vigilancia.",
+            "La filosofía confronta. El arte no decora el poder: LO FRACTURA.",
+            "Guiados por la insumisión, la ayuda mutua y la liberación...",
+            "Elegimos cooperación sobre dominación, libertad sin tutelas.",
+            "No pedimos permiso: construimos comunes y rompemos cercos.",
+            "EL SABER SERÁ LIBRE, O NO SERÁ."
+        ];
+
+        const listContainer = document.getElementById('manifesto-list');
+        const monitorText = document.getElementById('patent-monitor');
+
+        // Typing Effect Function
+        function typeWriter(text, element, delay = 25) {
+            return new Promise(resolve => {
+                let i = 0;
+                element.innerHTML = '';
+                const interval = setInterval(() => {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, delay);
+            });
+        }
+
+        // Sequence Runner
+        async function runSequence() {
+            for (const point of manifestoPoints) {
+                const li = document.createElement('li');
+                li.classList.add('visible'); 
+                listContainer.appendChild(li);
+                
+                // Simple typewriter simulation
+                await typeWriter(point, li, 15);
+                
+                // Post-processing for highlights based on new manifesto
+                if(point.includes("ES COMÚN")) {
+                    li.innerHTML = point.replace("ES COMÚN", "<span class='highlight'>ES COMÚN</span>");
+                }
+                if(point.includes("CONTRAGENÓMICA")) {
+                    li.innerHTML = point.replace("CONTRAGENÓMICA", "<span class='highlight'>CONTRAGENÓMICA</span>");
+                }
+                if(point.includes("LO FRACTURA")) {
+                    li.innerHTML = point.replace("LO FRACTURA", "<span class='highlight'>LO FRACTURA</span>");
+                }
+                if(point.includes("EL SABER SERÁ LIBRE")) {
+                    li.innerHTML = point.replace("EL SABER SERÁ LIBRE, O NO SERÁ.", "<span class='highlight'>EL SABER SERÁ LIBRE, O NO SERÁ.</span>");
+                }
+                
+                // Pause lengths adjusted for reading rhythm
+                await new Promise(r => setTimeout(r, 600));
+            }
+        }
+
+        // Random Number Generator for "Monitoring" effect
+        function monitorEffect() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&";
+            setInterval(() => {
+                // Occasional text scramble on the footer
+                if(Math.random() > 0.9) {
+                    let original = "¡ESPERANOS!";
+                    let scrambled = original.split('').map(c => Math.random() > 0.8 ? chars[Math.floor(Math.random() * chars.length)] : c).join('');
+                    monitorText.innerText = scrambled;
+                    setTimeout(() => monitorText.innerText = original, 100);
+                }
+            }, 500);
+        }
+
+        // Start Loop
+        window.onload = async () => {
+            monitorEffect(); // Inicia el efecto de glitch del monitor (corre en paralelo)
+            
+            // Bucle infinito para reiniciar el manifiesto
+            while(true) {
+                listContainer.innerHTML = ''; // Limpia la pantalla antes de empezar
+                await runSequence(); // Ejecuta la escritura
+                
+                // Espera 30 segundos (30000 milisegundos) antes de reiniciar
+                await new Promise(resolve => setTimeout(resolve, 30000));
+            }
+        };
+    </script>
+</body>
+</html>
