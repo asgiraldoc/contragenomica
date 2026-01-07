@@ -380,7 +380,7 @@
             setInterval(() => {
                 // Occasional text scramble on the footer
                 if(Math.random() > 0.9) {
-                    let original = "¡ESPERANOS!";
+                    let original = "¡ESPERANOS! || CONTACTANOS: contragenomica@proton.me";
                     let scrambled = original.split('').map(c => Math.random() > 0.8 ? chars[Math.floor(Math.random() * chars.length)] : c).join('');
                     monitorText.innerText = scrambled;
                     setTimeout(() => monitorText.innerText = original, 100);
