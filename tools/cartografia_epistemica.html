@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARTOGRAFÍA_EPISTÉMICA // CONTRAGENÓMICA</title>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ── HEADER ── */
+        #page-header {
+            padding: 1.5rem 2rem 1rem;
+            border-bottom: 1px solid var(--phosphor-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-shrink: 0;
+        }
+
+        #page-header h1 {
+            font-size: 2.2rem;
+            border: none;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 0.1em;
+            animation: pulse 3s infinite;
+        }
+
+        .header-meta {
+            font-size: 0.85rem;
+            color: var(--phosphor-dim);
+            text-align: right;
+            line-height: 1.8;
+        }
+
+        /* ── SEARCH PANEL ── */
+        #search-panel {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.2rem;
+            border-bottom: 1px solid var(--phosphor-dim);
+        }
+
+        .search-description {
+            font-size: 1.1rem;
+            color: var(--phosphor-dim);
+            max-width: 700px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-end;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            color: var(--phosphor-dim);
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: 1px solid var(--phosphor-dim);
+            color: var(--phosphor-main);
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            padding: 8px 12px;
+            outline: none;
+            transition: border-color 0.2s;
+            text-shadow: 0 0 4px var(--phosphor-dim);
+        }
+        .terminal-input:focus {
+            border-color: var(--phosphor-main);
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.2);
+        }
+        .terminal-input::placeholder { color: var(--phosphor-dim); opacity: 0.6; }
+
+        #run-btn {
+            background: transparent;
+            border: 2px solid var(--phosphor-main);
+            color: var(--phosphor-main);
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            padding: 8px 24px;
+            cursor: pointer;
+            letter-spacing: 0.1em;
+            transition: all 0.2s;
+            text-shadow: 0 0 4px var(--phosphor-dim);
+            white-space: nowrap;
+        }
+        #run-btn:hover:not(:disabled) {
+            background: var(--phosphor-main);
+            color: var(--color-bg);
+            box-shadow: 0 0 16px rgba(0, 255, 65, 0.4);
+            text-shadow: none;
+        }
+        #run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── LOADING STATE ── */
+        #loading-panel {
+            display: none;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #matrix-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.25;
+        }
+
+        #loading-log {
+            position: relative;
+            z-index: 10;
+            padding: 2rem;
+            font-size: 1.1rem;
+            line-height: 2;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .log-line { color: var(--phosphor-dim); }
+        .log-line.active { color: var(--phosphor-main); }
+        .log-line.done::before { content: '✓ '; color: var(--phosphor-main); }
+        .log-line.error { color: #ff3333; }
+
+        #progress-bar-wrap {
+            margin-top: 1rem;
+            border: 1px solid var(--phosphor-dim);
+            height: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+        #progress-bar {
+            height: 100%;
+            background: var(--phosphor-main);
+            width: 0%;
+            transition: width 0.4s ease;
+            box-shadow: 0 0 8px var(--phosphor-main);
+        }
+
+        /* ── RESULTS ── */
+        #results-panel {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 0;
+        }
+
+        /* ── STATS GRID ── */
+        #stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            border-bottom: 1px solid var(--phosphor-dim);
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            border-right: 1px solid var(--phosphor-dim);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .stat-card:last-child { border-right: none; }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.1em;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            line-height: 1;
+            color: var(--phosphor-main);
+        }
+        .stat-value.danger { color: #ff3333; }
+        .stat-value.warning { color: #ffff33; }
+
+        .stat-sub {
+            font-size: 0.85rem;
+            color: var(--phosphor-dim);
+            line-height: 1.4;
+        }
+
+        /* ── MAIN VIZ AREA ── */
+        #viz-area {
+            display: flex;
+            flex: 1;
+            min-height: 600px;
+        }
+
+        /* ── CHORD SECTION ── */
+        #chord-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border-right: 1px solid var(--phosphor-dim);
+            position: relative;
+        }
+
+        #chord-title {
+            font-size: 1rem;
+            color: var(--phosphor-dim);
+            margin-bottom: 1rem;
+            letter-spacing: 0.15em;
+        }
+
+        #chord-svg { overflow: visible; }
+
+        /* ── TOOLTIP ── */
+        #tooltip {
+            position: fixed;
+            background: rgba(0, 20, 0, 0.95);
+            border: 1px solid var(--phosphor-main);
+            color: var(--phosphor-main);
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
+            padding: 8px 14px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            line-height: 1.6;
+            box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+        }
+
+        /* ── SIDE PANEL ── */
+        #side-panel {
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--phosphor-dim);
+        }
+
+        .side-section {
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--phosphor-dim);
+        }
+
+        .side-section h3 {
+            font-size: 0.9rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.15em;
+            margin-bottom: 1rem;
+            border: none;
+            padding: 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+        }
+
+        .legend-name { flex: 1; }
+        .legend-count {
+            color: var(--phosphor-dim);
+            font-size: 0.9rem;
+        }
+
+        /* ── INEQUALITY BANNER ── */
+        #inequality-banner {
+            margin: 0 1.2rem 1rem;
+            padding: 1rem;
+            border: 1px solid #ff3333;
+            background: rgba(255, 51, 51, 0.05);
+        }
+
+        #inequality-ratio {
+            font-size: 3rem;
+            color: #ff3333;
+            text-shadow: 0 0 10px rgba(255, 51, 51, 0.6);
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        #inequality-text {
+            font-size: 0.95rem;
+            color: #ff6666;
+            line-height: 1.5;
+            margin-top: 0.5rem;
+        }
+
+        /* ── COUNTRY TABLE ── */
+        #table-section {
+            border-top: 1px solid var(--phosphor-dim);
+            padding: 1.5rem 2rem;
+            overflow-x: auto;
+        }
+
+        #table-section h3 {
+            font-size: 1rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.15em;
+            margin-bottom: 1rem;
+            border: none;
+            padding: 0;
+        }
+
+        .country-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1rem;
+        }
+
+        .country-table th {
+            text-align: left;
+            padding: 6px 12px;
+            color: var(--phosphor-dim);
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid var(--phosphor-dim);
+        }
+
+        .country-table td {
+            padding: 5px 12px;
+            border-bottom: 1px solid rgba(0, 143, 17, 0.2);
+        }
+
+        .country-table tr:hover td { background: rgba(0, 255, 65, 0.05); }
+
+        .region-tag {
+            display: inline-block;
+            padding: 1px 6px;
+            font-size: 0.75rem;
+            font-family: 'VT323', monospace;
+        }
+
+        /* ── ERROR STATE ── */
+        #error-panel {
+            display: none;
+            padding: 2rem;
+            color: #ff3333;
+            font-size: 1.2rem;
+            line-height: 2;
+        }
+
+        /* ── GLOW FILTER (SVG) ── */
+        .glow-path { filter: url(#glow); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            #viz-area { flex-direction: column; }
+            #side-panel { width: 100%; border-left: none; border-top: 1px solid var(--phosphor-dim); }
+            #chord-section { border-right: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="crt-flicker"></div>
+    <div id="tooltip"></div>
+
+    <!-- HEADER -->
+    <header id="page-header">
+        <div>
+            <a href="../pages/propaganda.html" class="back-link" style="margin-bottom:0.5rem">&lt;&lt; PROPAGANDA</a>
+            <h1>CARTOGRAFÍA_EPISTÉMICA.exe</h1>
+            <div style="font-size:0.9rem;color:var(--phosphor-dim);margin-top:0.3rem;">
+                Flujos de citación Norte ↔ Sur · Powered by OpenAlex (CC0)
+            </div>
+        </div>
+        <div class="header-meta">
+            <span id="clock-display">00:00:00</span><br>
+            SYS.ROOT.ADMIN<br>
+            <span class="blink-cursor"></span>
+        </div>
+    </header>
+
+    <!-- SEARCH PANEL -->
+    <section id="search-panel">
+        <p class="search-description">
+            Analiza quién cita a quién en la literatura científica.<br>
+            Muestra el flujo de conocimiento entre el Norte Global y el Sur Global.
+        </p>
+        <div class="search-row">
+            <div class="input-group">
+                <label>TEMA DE INVESTIGACIÓN</label>
+                <input type="text" id="topic-input" class="terminal-input" value="genomics" placeholder="ej. genomics, CRISPR...">
+            </div>
+            <div class="input-group" style="min-width:160px;max-width:220px;">
+                <label>PAÍS SUR (FOCO)</label>
+                <select id="country-focus" class="terminal-input" style="cursor:pointer;">
+                    <option value="BR">Brasil (BR)</option>
+                    <option value="CO" selected>Colombia (CO)</option>
+                    <option value="MX">México (MX)</option>
+                    <option value="AR">Argentina (AR)</option>
+                    <option value="IN">India (IN)</option>
+                    <option value="ZA">Sudáfrica (ZA)</option>
+                    <option value="NG">Nigeria (NG)</option>
+                    <option value="EG">Egipto (EG)</option>
+                </select>
+            </div>
+            <button id="run-btn" onclick="runAnalysis()">[EJECUTAR ANÁLISIS]</button>
+        </div>
+    </section>
+
+    <!-- LOADING -->
+    <div id="loading-panel">
+        <canvas id="matrix-canvas"></canvas>
+        <div id="loading-log">
+            <div id="log-container"></div>
+            <div id="progress-bar-wrap" style="display:none">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="error-panel">
+        <div>ERROR :: ANÁLISIS FALLIDO</div>
+        <div id="error-msg"></div>
+        <div style="margin-top:1rem;font-size:1rem;color:var(--phosphor-dim);">
+            &gt; Verifica tu conexión e intenta de nuevo.
+        </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-panel">
+
+        <!-- STATS ROW -->
+        <div id="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">PAPERS ANALIZADOS</span>
+                <span class="stat-value" id="stat-papers">—</span>
+                <span class="stat-sub">muestra representativa</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">REFERENCIAS RASTREADAS</span>
+                <span class="stat-value" id="stat-refs">—</span>
+                <span class="stat-sub">flujos de citación</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">SUR → NORTE</span>
+                <span class="stat-value warning" id="stat-s2n">—</span>
+                <span class="stat-sub">% citas del Sur al Norte</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">NORTE → SUR</span>
+                <span class="stat-value danger" id="stat-n2s">—</span>
+                <span class="stat-sub">% citas del Norte al Sur</span>
+            </div>
+        </div>
+
+        <!-- VIZ AREA -->
+        <div id="viz-area">
+
+            <!-- CHORD DIAGRAM -->
+            <div id="chord-section">
+                <div id="chord-title">FLUJOS DE CITACIÓN POR REGIÓN (muestra)</div>
+                <svg id="chord-svg"></svg>
+            </div>
+
+            <!-- SIDE PANEL -->
+            <div id="side-panel">
+                <div class="side-section">
+                    <h3>LEYENDA DE REGIONES</h3>
+                    <div id="legend-container"></div>
+                </div>
+
+                <div class="side-section">
+                    <h3>ÍNDICE DE INEQUIDAD</h3>
+                    <div id="inequality-banner">
+                        <span id="inequality-ratio">—</span>
+                        <div id="inequality-text"></div>
+                    </div>
+                </div>
+
+                <div class="side-section" style="flex:1;overflow-y:auto;">
+                    <h3>TOP PUBLICADORES (muestra)</h3>
+                    <div id="top-countries"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COUNTRY TABLE -->
+        <div id="table-section">
+            <h3>DISTRIBUCIÓN POR PAÍS · <span id="topic-display" style="color:var(--phosphor-main)"></span></h3>
+            <table class="country-table" id="country-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>PAÍS</th>
+                        <th>REGIÓN</th>
+                        <th>PUBLICACIONES</th>
+                        <th>% DEL TOTAL</th>
+                        <th>BARRA</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CONSTANTS
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    const REGIONS = {
+        LAC:    { name: 'LATINOAMÉRICA',  color: '#00ff41', short: 'LAC',
+                  codes: new Set(['AR','BO','BR','CL','CO','CR','CU','EC','GT','HN','MX','NI','PA','PE','PY','DO','SV','UY','VE']) },
+        AFRICA: { name: 'ÁFRICA',          color: '#ffff33', short: 'AFR',
+                  codes: new Set(['DZ','AO','BJ','BW','BF','BI','CM','CF','TD','CG','CD','DJ','EG','ET','GA','GM','GH','GN','CI','KE','LS','LR','LY','MG','MW','ML','MR','MZ','NA','NE','NG','RW','SN','SL','SO','ZA','SS','SD','SZ','TZ','TG','TN','UG','ZM','ZW']) },
+        ASIA:   { name: 'ASIA SUR/SE',     color: '#ff9900', short: 'ASI',
+                  codes: new Set(['BD','BT','KH','IN','ID','LA','MY','MV','MM','NP','PK','PH','LK','TH','TL','VN']) },
+        NORTE:  { name: 'NORTE GLOBAL',    color: '#ff3333', short: 'NOR',
+                  codes: new Set(['US','CA','GB','DE','FR','IT','ES','NL','CH','SE','NO','DK','FI','BE','AT','PT','IE','LU','AU','NZ','JP','KR','SG','IL','RU','PL','CZ','HU','RO','BG','HR','SK','SI','EE','LV','LT']) },
+        OTRAS:  { name: 'OTRAS (CN+)',      color: '#00ccff', short: 'OTR',
+                  codes: new Set(['CN','IR','IQ','JO','LB','SY','YE','AF','MN','TJ','TM','UZ','KZ','KG','AZ','AM','GE','BY','UA','MD','RS','BA','ME','MK','AL']) }
+    };
+
+    const REGION_KEYS  = Object.keys(REGIONS);
+    const REGION_NAMES = REGION_KEYS.map(k => REGIONS[k].name);
+    const REGION_COLORS= REGION_KEYS.map(k => REGIONS[k].color);
+
+    // Representative sample countries per region for fetching
+    const SOUTH_SAMPLE = ['BR','MX','CO','AR','ZA','IN','NG','EG'];
+    const NORTH_SAMPLE  = ['US','GB','DE','FR','CA'];
+
+    const API_BASE = 'https://api.openalex.org';
+    const MAILTO   = 'mailto=contragenomica@proton.me';
+
+    // Country name map (subset)
+    const COUNTRY_NAMES = {
+        US:'Estados Unidos',BR:'Brasil',CN:'China',GB:'Reino Unido',DE:'Alemania',
+        FR:'Francia',IN:'India',CA:'Canadá',JP:'Japón',IT:'Italia',ES:'España',
+        AU:'Australia',NL:'Países Bajos',KR:'Corea del Sur',MX:'México',RU:'Rusia',
+        CH:'Suiza',SE:'Suecia',AR:'Argentina',CO:'Colombia',ZA:'Sudáfrica',PL:'Polonia',
+        BE:'Bélgica',TR:'Turquía',PT:'Portugal',NG:'Nigeria',EG:'Egipto',PK:'Pakistán',
+        MY:'Malasia',NO:'Noruega',DK:'Dinamarca',AT:'Austria',FI:'Finlandia',
+        CZ:'República Checa',CL:'Chile',PE:'Perú',TH:'Tailandia',ID:'Indonesia',
+        IL:'Israel',NZ:'Nueva Zelanda',SG:'Singapur',HU:'Hungría',RO:'Rumanía',
+        BD:'Bangladesh',VN:'Vietnam',PH:'Filipinas',ET:'Etiopía',KE:'Kenia',
+        GH:'Ghana',TN:'Túnez',MA:'Marruecos',UA:'Ucrania',IE:'Irlanda'
+    };
+
+    function countryName(cc) {
+        return COUNTRY_NAMES[cc] || cc;
+    }
+
+    function getRegionKey(cc) {
+        if (!cc) return null;
+        const code = cc.toUpperCase();
+        for (const k of REGION_KEYS) {
+            if (REGIONS[k].codes.has(code)) return k;
+        }
+        return null;
+    }
+
+    function getCountryFromWork(work) {
+        if (!work?.authorships?.length) return null;
+        for (const auth of work.authorships) {
+            for (const inst of (auth.institutions || [])) {
+                if (inst.country_code) return inst.country_code.toUpperCase();
+            }
+        }
+        return null;
+    }
+
+    function extractWorkId(fullId) {
+        // "https://openalex.org/W1234" → "W1234"
+        if (!fullId) return null;
+        return String(fullId).split('/').pop();
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // API LAYER
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    async function apiFetch(endpoint) {
+        const sep = endpoint.includes('?') ? '&' : '?';
+        const url = `${API_BASE}${endpoint}${sep}${MAILTO}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status} en ${endpoint}`);
+        return res.json();
+    }
+
+    async function fetchPubsByCountry(topic) {
+        const data = await apiFetch(`/works?search=${encodeURIComponent(topic)}&group_by=authorships.institutions.country_code&per-page=200`);
+        return data.group_by || [];
+    }
+
+    async function fetchPapersFromCountry(topic, cc, n = 20) {
+        const data = await apiFetch(
+            `/works?search=${encodeURIComponent(topic)}&filter=authorships.institutions.country_code:${cc}&per-page=${n}&select=id,cited_by_count,referenced_works,authorships`
+        );
+        return data.results || [];
+    }
+
+    async function fetchWorksByIds(ids) {
+        if (!ids.length) return [];
+        // Batch at max 50
+        const results = [];
+        for (let i = 0; i < ids.length; i += 50) {
+            const batch = ids.slice(i, i + 50);
+            try {
+                const data = await apiFetch(
+                    `/works?filter=ids.openalex:${batch.join('|')}&select=id,authorships&per-page=50`
+                );
+                results.push(...(data.results || []));
+            } catch(_) { /* skip failed batches */ }
+        }
+        return results;
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // LOADING UI
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    let matrixInterval = null;
+
+    function startMatrixRain() {
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx    = canvas.getContext('2d');
+        canvas.width  = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        const chars   = 'ATCG01';
+        const fs      = 14;
+        const cols    = Math.floor(canvas.width / fs);
+        const drops   = Array(cols).fill(1);
+
+        matrixInterval = setInterval(() => {
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font      = `${fs}px monospace`;
+            drops.forEach((y, i) => {
+                ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fs, y * fs);
+                if (y * fs > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }, 40);
+    }
+
+    function stopMatrixRain() {
+        if (matrixInterval) { clearInterval(matrixInterval); matrixInterval = null; }
+    }
+
+    let logLines = [];
+
+    function logMsg(text, type = '') {
+        const container = document.getElementById('log-container');
+        const div = document.createElement('div');
+        div.className = `log-line ${type}`;
+        div.textContent = `> ${text}`;
+        container.appendChild(div);
+        logLines.push(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function setProgress(pct) {
+        document.getElementById('progress-bar-wrap').style.display = 'block';
+        document.getElementById('progress-bar').style.width = `${pct}%`;
+    }
+
+    function showLoading() {
+        document.getElementById('search-panel').style.display = 'none';
+        document.getElementById('loading-panel').style.display = 'flex';
+        document.getElementById('loading-panel').style.flexDirection = 'column';
+        document.getElementById('loading-panel').style.flex = '1';
+        document.getElementById('log-container').innerHTML = '';
+        logLines = [];
+        startMatrixRain();
+    }
+
+    function showResults() {
+        stopMatrixRain();
+        document.getElementById('loading-panel').style.display = 'none';
+        const rp = document.getElementById('results-panel');
+        rp.style.display = 'flex';
+    }
+
+    function showError(msg) {
+        stopMatrixRain();
+        document.getElementById('loading-panel').style.display = 'none';
+        document.getElementById('error-panel').style.display = 'block';
+        document.getElementById('error-msg').textContent = msg;
+        document.getElementById('run-btn').disabled = false;
+        document.getElementById('search-panel').style.display = 'flex';
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // DATA PROCESSING
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    function buildFlowMatrix(papers, refMap) {
+        // matrix[srcRegionIdx][dstRegionIdx] = citation count
+        const n = REGION_KEYS.length;
+        const matrix = Array.from({length: n}, () => Array(n).fill(0));
+
+        for (const paper of papers) {
+            const srcCC     = getCountryFromWork(paper);
+            const srcRegion = getRegionKey(srcCC);
+            if (!srcRegion) continue;
+            const si = REGION_KEYS.indexOf(srcRegion);
+
+            for (const refFullId of (paper.referenced_works || [])) {
+                const refId  = extractWorkId(refFullId);
+                const refWork = refMap.get(refId);
+                if (!refWork) continue;
+                const dstCC     = getCountryFromWork(refWork);
+                const dstRegion = getRegionKey(dstCC);
+                if (!dstRegion) continue;
+                const di = REGION_KEYS.indexOf(dstRegion);
+                matrix[si][di]++;
+            }
+        }
+        return matrix;
+    }
+
+    function combineMatrices(a, b) {
+        return a.map((row, i) => row.map((v, j) => v + b[i][j]));
+    }
+
+    function sampleArray(arr, n) {
+        const shuffled = [...arr].sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, n);
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // D3 CHORD DIAGRAM
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    function renderChord(matrix) {
+        const W = Math.min(520, window.innerWidth - 360);
+        const H = W;
+        const outerR = (W / 2) * 0.82;
+        const innerR = outerR - 22;
+
+        d3.select('#chord-svg').selectAll('*').remove();
+
+        const svg = d3.select('#chord-svg')
+            .attr('width', W).attr('height', H)
+            .append('g')
+            .attr('transform', `translate(${W/2},${H/2})`);
+
+        // Glow filter
+        const defs = svg.append('defs');
+        const filter = defs.append('filter').attr('id', 'chord-glow');
+        filter.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'coloredBlur');
+        const feMerge = filter.append('feMerge');
+        feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+        feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+        const chord = d3.chord().padAngle(0.05).sortSubgroups(d3.descending);
+        const arc   = d3.arc().innerRadius(innerR).outerRadius(outerR);
+        const ribbon= d3.ribbon().radius(innerR - 1);
+
+        const chords = chord(matrix);
+        const color  = d3.scaleOrdinal().domain(d3.range(REGION_KEYS.length)).range(REGION_COLORS);
+
+        const tooltip = document.getElementById('tooltip');
+
+        // Outer arcs
+        const group = svg.append('g').selectAll('g').data(chords.groups).join('g');
+
+        group.append('path')
+            .attr('d', arc)
+            .attr('fill', d => color(d.index))
+            .attr('stroke', d => d3.rgb(color(d.index)).darker(0.5))
+            .attr('opacity', 0.9)
+            .style('filter', 'url(#chord-glow)')
+            .on('mouseover', function(event, d) {
+                const total = d3.sum(matrix[d.index]);
+                const recv  = d3.sum(matrix.map(row => row[d.index]));
+                tooltip.style.display = 'block';
+                tooltip.innerHTML =
+                    `<b>${REGIONS[REGION_KEYS[d.index]].name}</b><br>` +
+                    `Cita: ${total} referencias<br>` +
+                    `Recibe: ${recv} citas`;
+                d3.select(this).attr('opacity', 1);
+            })
+            .on('mousemove', function(event) {
+                tooltip.style.left = (event.clientX + 14) + 'px';
+                tooltip.style.top  = (event.clientY - 10) + 'px';
+            })
+            .on('mouseout', function() {
+                tooltip.style.display = 'none';
+                d3.select(this).attr('opacity', 0.9);
+            });
+
+        // Arc tick marks
+        group.append('text')
+            .each(d => { d.angle = (d.startAngle + d.endAngle) / 2; })
+            .attr('dy', '0.35em')
+            .attr('transform', d => `
+                rotate(${d.angle * 180 / Math.PI - 90})
+                translate(${outerR + 10})
+                ${d.angle > Math.PI ? 'rotate(180)' : ''}
+            `)
+            .attr('text-anchor', d => d.angle > Math.PI ? 'end' : 'start')
+            .text(d => REGIONS[REGION_KEYS[d.index]].short)
+            .attr('fill', d => color(d.index))
+            .attr('font-family', 'VT323, monospace')
+            .attr('font-size', '13px')
+            .style('filter', 'url(#chord-glow)');
+
+        // Ribbons
+        const ribbonG = svg.append('g').attr('fill-opacity', 0.55);
+
+        ribbonG.selectAll('path')
+            .data(chords)
+            .join('path')
+            .attr('d', ribbon)
+            .attr('fill', d => color(d.source.index))
+            .attr('stroke', d => d3.rgb(color(d.source.index)).darker(0.4))
+            .on('mouseover', function(event, d) {
+                const from = REGIONS[REGION_KEYS[d.source.index]].name;
+                const to   = REGIONS[REGION_KEYS[d.target.index]].name;
+                const val  = d.source.value;
+                const rev  = d.target.value;
+                tooltip.style.display = 'block';
+                tooltip.innerHTML =
+                    `<b>${from} → ${to}</b>: ${val} citas<br>` +
+                    `<b>${to} → ${from}</b>: ${rev} citas`;
+                d3.select(this).attr('fill-opacity', 0.9);
+            })
+            .on('mousemove', function(event) {
+                tooltip.style.left = (event.clientX + 14) + 'px';
+                tooltip.style.top  = (event.clientY - 10) + 'px';
+            })
+            .on('mouseout', function() {
+                tooltip.style.display = 'none';
+                d3.select(this).attr('fill-opacity', 0.55);
+            });
+
+        // Animate ribbons in
+        ribbonG.selectAll('path')
+            .attr('opacity', 0)
+            .transition().duration(800).delay((_, i) => i * 60)
+            .attr('opacity', 1);
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // RENDER STATS & UI
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    function renderStats(matrix, totalPapers, totalRefs, pubsByCountry) {
+        // S→N and N→S flows
+        const nIdx = REGION_KEYS.indexOf('NORTE');
+
+        let southToNorth = 0, northToSouth = 0, totalFlow = 0;
+        const southIdxs = REGION_KEYS.map((k,i) => k !== 'NORTE' ? i : -1).filter(i => i >= 0);
+
+        for (let i = 0; i < REGION_KEYS.length; i++) {
+            for (let j = 0; j < REGION_KEYS.length; j++) {
+                totalFlow += matrix[i][j];
+                if (i !== nIdx && j === nIdx) southToNorth += matrix[i][j];
+                if (i === nIdx && j !== nIdx) northToSouth += matrix[i][j];
+            }
+        }
+
+        const s2nPct = totalFlow > 0 ? ((southToNorth / totalFlow) * 100).toFixed(1) : 0;
+        const n2sPct = totalFlow > 0 ? ((northToSouth / totalFlow) * 100).toFixed(1) : 0;
+
+        document.getElementById('stat-papers').textContent = totalPapers;
+        document.getElementById('stat-refs').textContent   = totalRefs;
+        document.getElementById('stat-s2n').textContent    = s2nPct + '%';
+        document.getElementById('stat-n2s').textContent    = n2sPct + '%';
+
+        // Inequality ratio
+        const ratio = northToSouth > 0 ? (southToNorth / northToSouth).toFixed(1) : '∞';
+        document.getElementById('inequality-ratio').textContent = `${ratio}x`;
+        document.getElementById('inequality-text').textContent =
+            `Por cada cita que el Norte envía al Sur, el Sur cita ${ratio} veces más al Norte. ` +
+            `La deuda epistémica es estructural, no accidental.`;
+
+        // Legend
+        const legend = document.getElementById('legend-container');
+        legend.innerHTML = '';
+        const regionPubs = {};
+        REGION_KEYS.forEach(k => { regionPubs[k] = 0; });
+
+        for (const item of pubsByCountry) {
+            const cc  = (item.key || '').toUpperCase();
+            const rk  = getRegionKey(cc);
+            if (rk) regionPubs[rk] += item.count || 0;
+        }
+
+        REGION_KEYS.forEach(k => {
+            const reg = REGIONS[k];
+            const div = document.createElement('div');
+            div.className = 'legend-item';
+            div.innerHTML =
+                `<div class="legend-dot" style="background:${reg.color};box-shadow:0 0 6px ${reg.color}"></div>` +
+                `<span class="legend-name">${reg.name}</span>` +
+                `<span class="legend-count">${(regionPubs[k]||0).toLocaleString()}</span>`;
+            legend.appendChild(div);
+        });
+
+        // Top countries
+        const top = document.getElementById('top-countries');
+        top.innerHTML = '';
+        const sorted = [...pubsByCountry]
+            .filter(d => d.count > 0 && d.key && d.key.length === 2)
+            .sort((a,b) => b.count - a.count)
+            .slice(0, 12);
+
+        const maxCount = sorted[0]?.count || 1;
+        sorted.forEach((item, i) => {
+            const cc  = item.key.toUpperCase();
+            const rk  = getRegionKey(cc);
+            const clr = rk ? REGIONS[rk].color : '#555';
+            const pct = ((item.count / maxCount) * 100).toFixed(0);
+            const div = document.createElement('div');
+            div.style.cssText = 'margin-bottom:8px;font-size:0.95rem;';
+            div.innerHTML =
+                `<div style="display:flex;justify-content:space-between;margin-bottom:2px;">` +
+                `<span style="color:${clr}">${i+1}. ${countryName(cc)}</span>` +
+                `<span style="color:var(--phosphor-dim)">${item.count.toLocaleString()}</span></div>` +
+                `<div style="height:4px;background:rgba(0,255,65,0.1);"><div style="height:100%;width:${pct}%;background:${clr};box-shadow:0 0 4px ${clr};"></div></div>`;
+            top.appendChild(div);
+        });
+    }
+
+    function renderTable(pubsByCountry, topic) {
+        document.getElementById('topic-display').textContent = topic.toUpperCase();
+        const total = d3.sum(pubsByCountry, d => d.count);
+        const maxC  = d3.max(pubsByCountry, d => d.count) || 1;
+
+        const sorted = [...pubsByCountry]
+            .filter(d => d.key && d.key.length === 2)
+            .sort((a,b) => b.count - a.count)
+            .slice(0, 40);
+
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = '';
+
+        sorted.forEach((item, i) => {
+            const cc  = item.key.toUpperCase();
+            const rk  = getRegionKey(cc);
+            const clr = rk ? REGIONS[rk].color : '#555';
+            const pct = ((item.count / total) * 100).toFixed(2);
+            const bar = ((item.count / maxC) * 120).toFixed(0);
+
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                `<td style="color:var(--phosphor-dim)">${i+1}</td>` +
+                `<td style="color:${clr}">${countryName(cc)} (${cc})</td>` +
+                `<td><span class="region-tag" style="color:${clr};border:1px solid ${clr}">${rk || '???'}</span></td>` +
+                `<td>${item.count.toLocaleString()}</td>` +
+                `<td style="color:var(--phosphor-dim)">${pct}%</td>` +
+                `<td><div style="height:10px;width:${bar}px;background:${clr};box-shadow:0 0 4px ${clr}"></div></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MAIN ANALYSIS CONTROLLER
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    async function runAnalysis() {
+        const topic   = document.getElementById('topic-input').value.trim() || 'genomics';
+        const focusCC = document.getElementById('country-focus').value;
+
+        document.getElementById('run-btn').disabled = true;
+        document.getElementById('error-panel').style.display = 'none';
+        document.getElementById('results-panel').style.display = 'none';
+
+        showLoading();
+
+        try {
+            // ── Step 1: Publication counts by country ──
+            logMsg(`Conectando con OpenAlex API...`, 'active');
+            setProgress(5);
+            const pubsByCountry = await fetchPubsByCountry(topic);
+            logMsg(`${pubsByCountry.length} países encontrados en "${topic}"`, 'done');
+            setProgress(15);
+
+            // ── Step 2: Papers from focus South country ──
+            logMsg(`Descargando papers de ${countryName(focusCC)} (${focusCC})...`, 'active');
+            const focusPapers = await fetchPapersFromCountry(topic, focusCC, 25);
+            logMsg(`${focusPapers.length} papers analizados del país foco`, 'done');
+            setProgress(30);
+
+            // ── Step 3: Papers from other South sample countries ──
+            const otherSouth = SOUTH_SAMPLE.filter(c => c !== focusCC).slice(0, 4);
+            logMsg(`Escaneando muestra del Sur Global (${otherSouth.join(', ')})...`, 'active');
+            const otherSouthPapers = [];
+            for (const cc of otherSouth) {
+                const papers = await fetchPapersFromCountry(topic, cc, 10);
+                otherSouthPapers.push(...papers);
+            }
+            logMsg(`${otherSouthPapers.length} papers adicionales del Sur`, 'done');
+            setProgress(50);
+
+            // ── Step 4: Papers from North countries ──
+            logMsg(`Escaneando Norte Global (${NORTH_SAMPLE.join(', ')})...`, 'active');
+            const northPapers = [];
+            for (const cc of NORTH_SAMPLE.slice(0, 3)) {
+                const papers = await fetchPapersFromCountry(topic, cc, 10);
+                northPapers.push(...papers);
+            }
+            logMsg(`${northPapers.length} papers del Norte analizados`, 'done');
+            setProgress(65);
+
+            // ── Step 5: Resolve referenced works ──
+            const allPapers = [...focusPapers, ...otherSouthPapers, ...northPapers];
+            logMsg(`Rastreando flujos de citación...`, 'active');
+
+            // Collect all referenced IDs (sample max 200)
+            const allRefIds = [];
+            for (const p of allPapers) {
+                const refs = (p.referenced_works || []).map(extractWorkId).filter(Boolean);
+                allRefIds.push(...sampleArray(refs, 10));
+            }
+            const sampledRefIds = [...new Set(sampleArray(allRefIds, 200))];
+
+            const refWorks = await fetchWorksByIds(sampledRefIds);
+            const refMap = new Map(refWorks.map(w => [extractWorkId(w.id), w]));
+            logMsg(`${refWorks.length} referencias resueltas geográficamente`, 'done');
+            setProgress(80);
+
+            // ── Step 6: Build flow matrices ──
+            logMsg(`Construyendo matriz de flujo Norte↔Sur...`, 'active');
+            const southMatrix = buildFlowMatrix([...focusPapers, ...otherSouthPapers], refMap);
+            const northMatrix = buildFlowMatrix(northPapers, refMap);
+            const matrix      = combineMatrices(southMatrix, northMatrix);
+            logMsg(`Matriz de ${REGION_KEYS.length}×${REGION_KEYS.length} regiones completada`, 'done');
+            setProgress(92);
+
+            // ── Step 7: Render ──
+            logMsg(`Renderizando cartografía...`, 'active');
+            await new Promise(r => setTimeout(r, 400)); // brief pause for drama
+
+            const totalPapers = allPapers.length;
+            const totalRefs   = refWorks.length;
+
+            showResults();
+            renderChord(matrix);
+            renderStats(matrix, totalPapers, totalRefs, pubsByCountry);
+            renderTable(pubsByCountry, topic);
+
+            setProgress(100);
+            logMsg(`Análisis completado.`, 'done');
+
+        } catch(err) {
+            showError(`${err.message}`);
+            console.error(err);
+        } finally {
+            document.getElementById('run-btn').disabled = false;
+        }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CLOCK
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function updateClock() {
+        document.getElementById('clock-display').textContent =
+            new Date().toLocaleTimeString('es-ES', {hour12: false});
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Enter key support
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('topic-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') runAnalysis();
+        });
+    });
+    </script>
+</body>
+</html>
