@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONTRAGENÓMICA // SISTEMA</title>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <style>
+        body {
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #top-bar {
+            border-bottom: 2px solid var(--phosphor-main);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        #main-display {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 1.3rem;
+        }
+
+        .output-line { margin-bottom: 8px; }
+        .system { color: #ffff33; }
+        .error  { color: var(--alert-color); }
+
+        .cmd-link {
+            cursor: pointer;
+            text-decoration: underline;
+            color: var(--phosphor-main);
+            transition: all 0.2s;
+        }
+        .cmd-link:hover {
+            background-color: var(--phosphor-main);
+            color: var(--color-bg);
+            text-decoration: none;
+        }
+
+        #input-area {
+            border-top: 1px solid var(--phosphor-dim);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        #prompt { margin-right: 10px; }
+
+        #command-input {
+            background: transparent;
+            border: none;
+            color: var(--phosphor-main);
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            flex-grow: 1;
+            outline: none;
+            text-transform: uppercase;
+            text-shadow: 0 0 2px var(--phosphor-dim), 0 0 8px var(--phosphor-main);
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <div id="top-bar">
+        <span>SYS.ROOT.ADMIN</span>
+        <span id="clock">00:00:00</span>
+    </div>
+
+    <div id="main-display">
+        <div class="output-line system">CONEXIÓN ESTABLECIDA.</div>
+        <div class="output-line">BIENVENIDO A CONTRAGENÓMIC(A) OS v4.2.0</div>
+        <br>
+        <div class="output-line">MENÚ PRINCIPAL (Click o Escriba):</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('ARCHIVO_SEMILLA')">ARCHIVO_SEMILLA</span> :: Información del Proyecto</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('PROPAGANDA')">PROPAGANDA</span> :: Generador ASCII (DNA Mode)</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('BIO_LAB')">BIO_LAB</span> :: [RESTRINGIDO]</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('LOGOUT')">LOGOUT</span> :: Abortar el Sistema</div>
+        <br>
+        <div class="output-line">Escriba 'help' para ayuda.</div>
+        <br>
+    </div>
+
+    <div id="input-area">
+        <span id="prompt">root@contragenomica:~$</span>
+        <input type="text" id="command-input" autofocus autocomplete="off">
+    </div>
+
+    <script>
+        function updateClock() {
+            document.getElementById('clock').innerText =
+                new Date().toLocaleTimeString('es-ES', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const input   = document.getElementById('command-input');
+        const display = document.getElementById('main-display');
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function printLine(html, cssClass = 'output-line') {
+            const div = document.createElement('div');
+            div.className = cssClass;
+            div.innerHTML = html;
+            display.appendChild(div);
+            display.scrollTop = display.scrollHeight;
+        }
+
+        function printSafe(text, cssClass = 'output-line') {
+            printLine(escapeHtml(text), cssClass);
+        }
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const cmd = this.value.trim().toUpperCase();
+                if (cmd) {
+                    printLine(`root@contragenomica:~$ ${escapeHtml(cmd)}`);
+                    processCommand(cmd);
+                }
+                this.value = '';
+            }
+        });
+
+        document.addEventListener('click', () => input.focus());
+
+        function execute(cmd) {
+            printLine(`root@contragenomica:~$ ${escapeHtml(cmd)}`);
+            processCommand(cmd);
+        }
+
+        function processCommand(rawCmd) {
+            const cmd = rawCmd.startsWith('/') ? rawCmd.substring(1) : rawCmd;
+
+            switch (cmd) {
+                case 'HELP':
+                case '?':
+                    printSafe('COMANDOS DISPONIBLES: ARCHIVO_SEMILLA, PROPAGANDA, BIO_LAB, LOGOUT, CLEAR', 'output-line system');
+                    break;
+                case 'ARCHIVO_SEMILLA':
+                    printSafe('ACCEDIENDO A ARCHIVO SEMILLA...', 'output-line system');
+                    setTimeout(() => window.location.href = 'archivo_semilla.html', 800);
+                    break;
+                case 'PROPAGANDA':
+                    printSafe('INICIANDO GENERADOR DE ARTE ADN...', 'output-line system');
+                    setTimeout(() => window.location.href = 'propaganda.html', 800);
+                    break;
+                case 'BIO_LAB':
+                    printSafe('ERROR 403: ACCESO DENEGADO. EN CONSTRUCCIÓN.', 'output-line error');
+                    break;
+                case 'LOGOUT':
+                    printSafe('CERRANDO SESIÓN...', 'output-line system');
+                    setTimeout(() => window.location.href = '../index.html', 1000);
+                    break;
+                case 'CLEAR':
+                case 'CLS':
+                    display.innerHTML = '';
+                    break;
+                default:
+                    printSafe(`Comando no reconocido: ${cmd}`, 'output-line error');
+            }
+        }
+    </script>
+</body>
+</html>

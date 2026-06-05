@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONTRAGENÓMICA // GENERADOR ASCII</title>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <style>
+        body {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .back-link {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            margin-bottom: 0;
+        }
+
+        .controls {
+            border: 1px solid var(--phosphor-dim);
+            padding: 20px;
+            background: rgba(0, 25, 0, 0.5);
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        input[type="file"] {
+            color: var(--phosphor-main);
+            font-family: inherit;
+            margin-top: 10px;
+        }
+
+        .resize-btns {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            background: transparent;
+            border: 1px solid var(--phosphor-main);
+            color: var(--phosphor-main);
+            padding: 2px 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .btn-small:hover,
+        .btn-small.active {
+            background: var(--phosphor-main);
+            color: var(--color-bg);
+        }
+
+        .output-area {
+            font-size: 8px;
+            line-height: 8px;
+            white-space: pre;
+            overflow-x: auto;
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+    <a href="../pages/propaganda.html" class="back-link">&lt;&lt; VOLVER A PROPAGANDA</a>
+
+    <h1>GENERADOR DE PROPAGANDA (A)SCII</h1>
+
+    <div class="controls">
+        <p>1. Selecciona una imagen para recodificar:</p>
+        <input type="file" id="upload" accept="image/*">
+
+        <div class="resize-btns">
+            <button class="btn-small" onclick="setResolution(25)">[ WA / MÓVIL ]</button>
+            <button class="btn-small" onclick="setResolution(50)">[ TW / REDES ]</button>
+            <button class="btn-small active" onclick="setResolution(150)">[ HD / PC ]</button>
+        </div>
+
+        <p><small>(Usa imágenes de alto contraste para mejores resultados)</small></p>
+        <p><small>(Próximamente soporte para LLM)</small></p>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div style="position: relative; width: 100%; max-width: 800px; display: flex; flex-direction: column; align-items: center;">
+        <button id="copy-btn" class="btn" style="display:none; margin-bottom: 10px;">[ COPIAR AL PORTAPAPELES ]</button>
+        <div id="ascii-output" class="output-area"></div>
+    </div>
+
+    <script>
+        const uploadInput = document.getElementById('upload');
+        const canvas      = document.getElementById('canvas');
+        const ctx         = canvas.getContext('2d');
+        const output      = document.getElementById('ascii-output');
+        const copyBtn     = document.getElementById('copy-btn');
+        const btns        = document.querySelectorAll('.btn-small');
+
+        let currentImage = null;
+        let currentWidth = 150;
+
+        function setResolution(w) {
+            currentWidth = w;
+            btns.forEach(b => b.classList.remove('active'));
+            btns.forEach(b => {
+                if (b.getAttribute('onclick').includes(w)) b.classList.add('active');
+            });
+            if (currentImage) processImage(currentImage);
+        }
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(output.innerText).then(() => {
+                const orig = copyBtn.innerText;
+                copyBtn.innerText = '[ ¡COPIADO! ]';
+                setTimeout(() => copyBtn.innerText = orig, 2000);
+            }).catch(err => console.error('Error al copiar:', err));
+        });
+
+        uploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => { currentImage = img; processImage(img); };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function processImage(img) {
+            const maxWidth = currentWidth;
+            const scale   = maxWidth / img.width;
+            const width   = maxWidth;
+            const height  = Math.floor(img.height * scale * 0.55);
+
+            if (width < 50)       output.style.fontSize = '12px';
+            else if (width < 100) output.style.fontSize = '10px';
+            else                  output.style.fontSize = '6px';
+            output.style.lineHeight = output.style.fontSize;
+
+            canvas.width  = width;
+            canvas.height = height;
+
+            ctx.drawImage(img, 0, 0, width, height);
+            const { data } = ctx.getImageData(0, 0, width, height);
+
+            const CONTRA_CHARS = [' ', '-', 'C', 'T', 'U', 'A', 'G'];
+            let asciiStr = '';
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const offset = (y * width + x) * 4;
+                    const brightness = (data[offset] + data[offset+1] + data[offset+2]) / 3;
+                    const idx = Math.floor((brightness / 255) * (CONTRA_CHARS.length - 1));
+                    asciiStr += CONTRA_CHARS[idx];
+                }
+                asciiStr += '\n';
+            }
+
+            output.innerText = asciiStr;
+            copyBtn.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+@font-face {
+    font-family: 'VT323';
+    src: url('../fonts/VT323.woff2') format('woff2');
+    font-display: swap;
+}
+
+:root {
+    --color-bg: #000000;
+    --phosphor-main: #00ff41;
+    --phosphor-dim: #008f11;
+    --glitch-color-1: #0ff;
+    --glitch-color-2: #f0f;
+    --alert-color: #ff3333;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--color-bg);
+    color: var(--phosphor-main);
+    font-family: 'VT323', monospace;
+    text-shadow: 0 0 2px var(--phosphor-dim), 0 0 8px var(--phosphor-main);
+}
+
+/* --- CRT EFFECTS --- */
+.scanlines {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(to bottom,
+        rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.crt-flicker {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(18, 16, 16, 0.1);
+    opacity: 0;
+    z-index: 50;
+    pointer-events: none;
+    animation: flicker 0.15s infinite;
+}
+
+.vignette {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%);
+    z-index: 51;
+    pointer-events: none;
+}
+
+/* --- NAVIGATION --- */
+.back-link {
+    color: var(--phosphor-dim);
+    text-decoration: none;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+}
+.back-link:hover { color: var(--phosphor-main); }
+
+/* --- MENU --- */
+h1 {
+    border-bottom: 2px dashed var(--phosphor-main);
+    padding-bottom: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.menu-list { list-style: none; padding: 0; }
+
+.menu-item {
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+}
+
+.menu-item a {
+    color: var(--phosphor-main);
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.menu-item a:hover {
+    background: rgba(0, 255, 65, 0.1);
+    border-left: 5px solid var(--phosphor-main);
+    padding-left: 20px;
+}
+
+.desc {
+    display: block;
+    font-size: 1rem;
+    color: var(--phosphor-dim);
+    margin-top: 5px;
+    margin-left: 15px;
+}
+
+/* --- COMMON COMPONENTS --- */
+.btn {
+    display: inline-block;
+    background: var(--phosphor-main);
+    color: var(--color-bg);
+    padding: 5px 15px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    font-family: 'VT323', monospace;
+    text-decoration: none;
+    text-shadow: none;
+}
+.btn:hover { background: #fff; }
+
+.blink-cursor {
+    display: inline-block;
+    width: 10px;
+    height: 1.2rem;
+    background: var(--phosphor-main);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes flicker {
+    0%   { opacity: 0.02; }
+    50%  { opacity: 0.05; }
+    100% { opacity: 0.02; }
+}
+
+@keyframes pulse {
+    0%   { opacity: 0.7; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.7; }
+}
