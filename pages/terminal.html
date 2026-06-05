@@ -82,6 +82,9 @@
         <div class="output-line">MENÚ PRINCIPAL (Click o Escriba):</div>
         <div class="output-line"> > <span class="cmd-link" onclick="execute('ARCHIVO_SEMILLA')">ARCHIVO_SEMILLA</span> :: Información del Proyecto</div>
         <div class="output-line"> > <span class="cmd-link" onclick="execute('PROPAGANDA')">PROPAGANDA</span> :: Generador ASCII (DNA Mode)</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('CARTOGRAFIA')">CARTOGRAFIA</span> :: Flujos de citación Norte↔Sur</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('CRONOLOGIA')">CRONOLOGIA</span> :: Archivo de Biopiratería :: 18 casos documentados</div>
+        <div class="output-line"> > <span class="cmd-link" onclick="execute('FINANCIAMIENTO')">FINANCIAMIENTO</span> :: Quién financia la ciencia genómica del Sur</div>
         <div class="output-line"> > <span class="cmd-link" onclick="execute('BIO_LAB')">BIO_LAB</span> :: [RESTRINGIDO]</div>
         <div class="output-line"> > <span class="cmd-link" onclick="execute('LOGOUT')">LOGOUT</span> :: Abortar el Sistema</div>
         <br>
@@ -149,7 +152,7 @@
             switch (cmd) {
                 case 'HELP':
                 case '?':
-                    printSafe('COMANDOS DISPONIBLES: ARCHIVO_SEMILLA, PROPAGANDA, BIO_LAB, LOGOUT, CLEAR', 'output-line system');
+                    printSafe('COMANDOS: ARCHIVO_SEMILLA, PROPAGANDA, CARTOGRAFIA, CRONOLOGIA, FINANCIAMIENTO, BIO_LAB, LOGOUT, CLEAR', 'output-line system');
                     break;
                 case 'ARCHIVO_SEMILLA':
                     printSafe('ACCEDIENDO A ARCHIVO SEMILLA...', 'output-line system');
@@ -158,6 +161,18 @@
                 case 'PROPAGANDA':
                     printSafe('INICIANDO GENERADOR DE ARTE ADN...', 'output-line system');
                     setTimeout(() => window.location.href = 'propaganda.html', 800);
+                    break;
+                case 'CARTOGRAFIA':
+                    printSafe('CARGANDO CARTOGRAFÍA EPISTÉMICA...', 'output-line system');
+                    setTimeout(() => window.location.href = '../tools/cartografia_epistemica.html', 800);
+                    break;
+                case 'CRONOLOGIA':
+                    printSafe('ACCEDIENDO A ARCHIVO CLASIFICADO...', 'output-line system');
+                    setTimeout(() => window.location.href = '../tools/cronologia_extractiva.html', 800);
+                    break;
+                case 'FINANCIAMIENTO':
+                    printSafe('CONSULTANDO OPENALEX :: MAPEANDO FLUJOS DE CAPITAL...', 'output-line system');
+                    setTimeout(() => window.location.href = '../tools/quien_financia.html', 800);
                     break;
                 case 'BIO_LAB':
                     printSafe('ERROR 403: ACCESO DENEGADO. EN CONSTRUCCIÓN.', 'output-line error');
