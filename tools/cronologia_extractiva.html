@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRONOLOGÍA_EXTRACTIVA // CONTRAGENÓMICA</title>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <style>
+        :root {
+            --vigente:  #ff3333;
+            --disputa:  #ffff33;
+            --revocada: #00ff41;
+            --expirada: #555555;
+            --parcial:  #00ccff;
+        }
+
+        * { cursor: default; }
+        a { cursor: pointer; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ── HEADER ─────────────────────────────── */
+        #hdr {
+            border-bottom: 2px solid var(--phosphor-main);
+            padding: 1rem 1.5rem 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        #hdr h1 {
+            font-size: 2rem;
+            border: none; padding: 0; margin: 0;
+            letter-spacing: 0.08em;
+            line-height: 1;
+        }
+
+        #hdr h1 span { color: var(--vigente); }
+
+        .hdr-sub {
+            font-size: 0.9rem;
+            color: var(--phosphor-dim);
+            margin-top: 0.3rem;
+            letter-spacing: 0.1em;
+        }
+
+        .hdr-right {
+            text-align: right;
+            font-size: 0.9rem;
+            color: var(--phosphor-dim);
+            line-height: 2;
+            flex-shrink: 0;
+        }
+
+        /* ── DAMAGE TICKER ───────────────────────── */
+        #damage-ticker {
+            background: rgba(255,51,51,0.07);
+            border-bottom: 1px solid var(--vigente);
+            border-top: 1px solid var(--vigente);
+            padding: 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 1.1rem;
+            flex-wrap: wrap;
+        }
+
+        .ticker-label {
+            color: var(--vigente);
+            letter-spacing: 0.1em;
+            font-size: 0.85rem;
+        }
+
+        #damage-counter {
+            font-size: 1.6rem;
+            color: var(--vigente);
+            text-shadow: 0 0 12px rgba(255,51,51,0.7);
+            animation: pulse 1.5s infinite;
+            letter-spacing: 0.05em;
+        }
+
+        .ticker-note {
+            color: var(--phosphor-dim);
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+
+        /* ── STATS BANNER ────────────────────────── */
+        #stats-banner {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-bottom: 1px solid var(--phosphor-dim);
+        }
+
+        .stat-cell {
+            padding: 1rem 1.2rem;
+            border-right: 1px solid var(--phosphor-dim);
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .stat-cell:last-child { border-right: none; }
+
+        .stat-lbl {
+            font-size: 0.75rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.12em;
+        }
+
+        .stat-val {
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--phosphor-main);
+        }
+
+        .stat-val.red   { color: var(--vigente); text-shadow: 0 0 8px rgba(255,51,51,0.5); }
+        .stat-val.yello { color: var(--disputa); text-shadow: 0 0 8px rgba(255,255,51,0.4); }
+
+        /* ── FILTER BAR ──────────────────────────── */
+        #filter-bar {
+            padding: 0.8rem 1.5rem;
+            border-bottom: 1px solid var(--phosphor-dim);
+            background: rgba(0,20,0,0.4);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-lbl {
+            font-size: 0.75rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .fbtn {
+            background: transparent;
+            border: 1px solid var(--phosphor-dim);
+            color: var(--phosphor-dim);
+            font-family: 'VT323', monospace;
+            font-size: 0.9rem;
+            padding: 2px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            letter-spacing: 0.05em;
+            text-shadow: none;
+        }
+
+        .fbtn:hover { border-color: var(--phosphor-main); color: var(--phosphor-main); }
+
+        .fbtn.active {
+            background: var(--phosphor-main);
+            color: var(--color-bg);
+            border-color: var(--phosphor-main);
+        }
+
+        .fbtn.v-active  { background: var(--vigente);  color: #000; border-color: var(--vigente); }
+        .fbtn.d-active  { background: var(--disputa);  color: #000; border-color: var(--disputa); }
+        .fbtn.r-active  { background: var(--revocada); color: #000; border-color: var(--revocada); }
+        .fbtn.e-active  { background: var(--expirada); color: #ccc; border-color: var(--expirada); }
+        .fbtn.p-active  { background: var(--parcial);  color: #000; border-color: var(--parcial); }
+
+        #search-input {
+            background: transparent;
+            border: 1px solid var(--phosphor-dim);
+            color: var(--phosphor-main);
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
+            padding: 2px 10px;
+            outline: none;
+            width: 200px;
+            transition: border-color 0.2s;
+        }
+        #search-input:focus { border-color: var(--phosphor-main); }
+        #search-input::placeholder { color: var(--phosphor-dim); opacity: 0.5; }
+
+        #filter-result {
+            margin-left: auto;
+            font-size: 0.85rem;
+            color: var(--phosphor-dim);
+        }
+
+        /* ── TIMELINE WRAPPER ────────────────────── */
+        #timeline {
+            flex: 1;
+            padding: 2rem 1.5rem 2rem 2rem;
+            position: relative;
+        }
+
+        /* Vertical glowing line */
+        #timeline::before {
+            content: '';
+            position: absolute;
+            left: 2.8rem;
+            top: 0; bottom: 0;
+            width: 2px;
+            background: var(--phosphor-dim);
+            box-shadow: 0 0 8px var(--phosphor-dim);
+        }
+
+        /* ── YEAR GROUP ──────────────────────────── */
+        .year-group { margin-bottom: 2.5rem; }
+
+        .year-marker {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+            position: relative;
+        }
+
+        .year-dot {
+            width: 14px; height: 14px;
+            background: var(--phosphor-main);
+            border: 2px solid var(--color-bg);
+            box-shadow: 0 0 10px var(--phosphor-main);
+            flex-shrink: 0;
+            position: relative;
+            left: -0.45rem;
+        }
+
+        .year-label {
+            font-size: 1.8rem;
+            color: var(--phosphor-main);
+            letter-spacing: 0.15em;
+            line-height: 1;
+            text-shadow: 0 0 12px var(--phosphor-main);
+        }
+
+        .year-count {
+            font-size: 0.85rem;
+            color: var(--phosphor-dim);
+            border: 1px solid var(--phosphor-dim);
+            padding: 1px 8px;
+        }
+
+        /* ── CASE CARDS ──────────────────────────── */
+        .cases-in-year {
+            padding-left: 2.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .case-card {
+            border: 1px solid var(--card-color, var(--phosphor-dim));
+            background: rgba(0,10,0,0.5);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .case-card:hover {
+            box-shadow: 0 0 16px rgba(0,255,65,0.15);
+        }
+
+        /* Connector dot to timeline */
+        .case-card::before {
+            content: '──';
+            position: absolute;
+            left: -2.25rem;
+            top: 1.1rem;
+            color: var(--card-color, var(--phosphor-dim));
+            font-size: 0.9rem;
+            letter-spacing: -2px;
+        }
+
+        /* CLASIFICADO watermark */
+        .case-card .watermark {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-28deg);
+            font-size: 2.8rem;
+            color: rgba(255,0,0,0.06);
+            pointer-events: none;
+            letter-spacing: 0.5em;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: opacity 0.3s;
+            z-index: 0;
+        }
+
+        .case-card.open .watermark { opacity: 0; }
+
+        /* Card header (always visible) */
+        .card-head {
+            padding: 0.8rem 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .card-code {
+            font-size: 0.8rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.1em;
+        }
+
+        .card-code .op-name {
+            color: var(--card-color, var(--phosphor-main));
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 2px 10px;
+            border: 1px solid currentColor;
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-VIGENTE  { color: var(--vigente);  animation: badgePulse 1.2s infinite; }
+        .badge-EN_DISPUTA { color: var(--disputa); animation: badgeFlash 0.8s infinite; }
+        .badge-REVOCADA { color: var(--revocada); }
+        .badge-EXPIRADA { color: var(--expirada); }
+        .badge-PARCIAL  { color: var(--parcial); }
+
+        @keyframes badgePulse {
+            0%,100% { opacity: 1; box-shadow: 0 0 6px rgba(255,51,51,0.6); }
+            50%      { opacity: 0.6; box-shadow: none; }
+        }
+        @keyframes badgeFlash {
+            0%,100% { opacity: 1; }
+            50%      { opacity: 0.4; }
+        }
+
+        .card-organism {
+            font-size: 1.5rem;
+            color: var(--phosphor-main);
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            margin-bottom: 0.2rem;
+        }
+
+        .card-common { font-size: 1rem; color: var(--phosphor-dim); }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem 1.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .card-meta span { color: var(--phosphor-dim); }
+        .card-meta .accent { color: var(--card-color, var(--phosphor-main)); }
+
+        .card-patent {
+            font-size: 0.8rem;
+            color: var(--phosphor-dim);
+            margin-top: 0.4rem;
+            border-top: 1px solid rgba(0,143,17,0.3);
+            padding-top: 0.4rem;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.05em;
+        }
+
+        .expand-hint {
+            position: absolute;
+            bottom: 0.5rem; right: 0.8rem;
+            font-size: 0.75rem;
+            color: var(--phosphor-dim);
+            opacity: 0.6;
+        }
+
+        /* Card body (hidden until open) */
+        .card-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.45s ease;
+            border-top: 1px solid rgba(0,143,17,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .case-card.open .card-body {
+            max-height: 800px;
+        }
+
+        .card-body-inner {
+            padding: 1rem;
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .dossier-section {
+            border-left: 2px solid var(--card-color, var(--phosphor-dim));
+            padding-left: 0.8rem;
+        }
+
+        .dossier-label {
+            font-size: 0.75rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.15em;
+            margin-bottom: 0.3rem;
+        }
+
+        .dossier-text {
+            font-size: 1rem;
+            color: var(--phosphor-main);
+            line-height: 1.6;
+        }
+
+        .dossier-text.typewriter { border-right: 2px solid var(--phosphor-main); }
+
+        .result-text {
+            font-size: 1rem;
+            padding: 0.5rem 0.8rem;
+            border: 1px solid var(--card-color, var(--phosphor-dim));
+            color: var(--card-color, var(--phosphor-main));
+            background: rgba(0,0,0,0.3);
+        }
+
+        .valor-highlight {
+            font-size: 1.3rem;
+            color: var(--vigente);
+            text-shadow: 0 0 8px rgba(255,51,51,0.5);
+        }
+
+        .figuras-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .figura-tag {
+            border: 1px solid var(--phosphor-dim);
+            padding: 1px 8px;
+            font-size: 0.85rem;
+            color: var(--phosphor-dim);
+        }
+
+        .fuentes-list {
+            font-size: 0.85rem;
+            color: var(--phosphor-dim);
+            line-height: 2;
+        }
+
+        .fuentes-list span::before { content: '> '; }
+
+        .desclasificado-stamp {
+            display: inline-block;
+            border: 2px solid var(--revocada);
+            color: var(--revocada);
+            padding: 2px 12px;
+            font-size: 0.9rem;
+            letter-spacing: 0.3em;
+            transform: rotate(-3deg);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ── NO RESULTS ──────────────────────────── */
+        #no-results {
+            display: none;
+            padding: 3rem;
+            text-align: center;
+            color: var(--phosphor-dim);
+            font-size: 1.2rem;
+        }
+
+        /* ── ALERTA OVERLAY ──────────────────────── */
+        #alerta-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #alerta-box {
+            border: 2px solid var(--vigente);
+            padding: 2.5rem 3rem;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255,51,51,0.4);
+            animation: pulse 2s infinite;
+        }
+
+        #alerta-box pre {
+            color: var(--vigente);
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        #alerta-close {
+            background: transparent;
+            border: 1px solid var(--phosphor-main);
+            color: var(--phosphor-main);
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            padding: 6px 24px;
+            cursor: pointer;
+        }
+        #alerta-close:hover { background: var(--phosphor-main); color: #000; }
+
+        /* ── FOOTER ──────────────────────────────── */
+        #page-footer {
+            border-top: 2px solid var(--phosphor-dim);
+            padding: 1.5rem 2rem;
+            font-size: 0.9rem;
+            color: var(--phosphor-dim);
+            line-height: 2;
+        }
+
+        #page-footer h3 {
+            font-size: 1rem;
+            color: var(--phosphor-main);
+            border: none; padding: 0;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.15em;
+        }
+
+        .source-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.3rem 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .source-item::before { content: '>> '; color: var(--phosphor-dim); }
+
+        .cc-notice {
+            border-top: 1px solid rgba(0,143,17,0.3);
+            padding-top: 0.8rem;
+            margin-top: 0.8rem;
+            font-size: 0.8rem;
+            color: var(--phosphor-dim);
+        }
+
+        /* ── RESPONSIVE ──────────────────────────── */
+        @media (max-width: 700px) {
+            #stats-banner { grid-template-columns: repeat(2, 1fr); }
+            #hdr h1 { font-size: 1.4rem; }
+            #timeline { padding-left: 1.5rem; }
+            #timeline::before { left: 1.8rem; }
+            .cases-in-year { padding-left: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="crt-flicker"></div>
+
+    <!-- ALERTA OVERLAY -->
+    <div id="alerta-overlay">
+        <div id="alerta-box">
+            <pre id="alerta-text">
+██████████████████████████████████████████████
+█                                            █
+█   ⚠  ALERTA MÁXIMA :: ARCHIVO COMPLETO  ⚠  █
+█                                            █
+█  Has accedido a todos los expedientes     █
+█  de heridas abiertas sin resolver.        █
+█                                            █
+█  Mientras lees esto:                      █
+█  · Las patentes siguen activas.           █
+█  · El dinero sigue fluyendo al Norte.     █
+█  · Nadie pidió permiso.                   █
+█                                            █
+█  La desobediencia no es una opción.       █
+█  ES UNA OBLIGACIÓN.                       █
+█                                            █
+██████████████████████████████████████████████</pre>
+            <button id="alerta-close" onclick="cerrarAlerta()">[CERRAR EXPEDIENTE]</button>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header id="hdr">
+        <div>
+            <a href="../pages/propaganda.html" class="back-link" style="margin-bottom:0.4rem">&lt;&lt; PROPAGANDA</a>
+            <h1>CRONOLOGÍA<span>_</span>EXTRACTIVA<span>.exe</span></h1>
+            <div class="hdr-sub">Archivo de Biopiratería Documentada :: Sur Global :: 18 expedientes</div>
+        </div>
+        <div class="hdr-right">
+            <span id="clock">00:00:00</span><br>
+            SYS.ROOT.ADMIN<br>
+            <span class="blink-cursor"></span>
+        </div>
+    </header>
+
+    <!-- DAMAGE TICKER -->
+    <div id="damage-ticker">
+        <span class="ticker-label">VALOR ESTIMADO EXTRAÍDO:</span>
+        <span id="damage-counter">$0</span>
+        <span class="ticker-note">* estimación conservadora · fuentes: ETC Group, GRAIN, CBD, RAFI</span>
+    </div>
+
+    <!-- STATS BANNER -->
+    <div id="stats-banner">
+        <div class="stat-cell">
+            <span class="stat-lbl">CASOS DOCUMENTADOS</span>
+            <span class="stat-val" id="st-total">18</span>
+        </div>
+        <div class="stat-cell">
+            <span class="stat-lbl">HERIDAS ABIERTAS (VIGENTE)</span>
+            <span class="stat-val red" id="st-vigente">—</span>
+        </div>
+        <div class="stat-cell">
+            <span class="stat-lbl">EN BATALLA LEGAL</span>
+            <span class="stat-val yello" id="st-disputa">—</span>
+        </div>
+        <div class="stat-cell">
+            <span class="stat-lbl">PAÍSES SAQUEADOS</span>
+            <span class="stat-val" id="st-paises">—</span>
+        </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div id="filter-bar">
+        <div class="filter-group">
+            <span class="filter-lbl">REGIÓN:</span>
+            <button class="fbtn active" onclick="setFilter('region','TODOS',this)">TODOS</button>
+            <button class="fbtn" onclick="setFilter('region','LAC',this)">LAC</button>
+            <button class="fbtn" onclick="setFilter('region','AFRICA',this)">AFRICA</button>
+            <button class="fbtn" onclick="setFilter('region','ASIA',this)">ASIA</button>
+            <button class="fbtn" onclick="setFilter('region','OTRAS',this)">OTRAS</button>
+        </div>
+        <div class="filter-group">
+            <span class="filter-lbl">ESTADO:</span>
+            <button class="fbtn active" onclick="setStatusFilter('TODOS',this)">TODOS</button>
+            <button class="fbtn" onclick="setStatusFilter('VIGENTE',this)">VIGENTE</button>
+            <button class="fbtn" onclick="setStatusFilter('EN_DISPUTA',this)">DISPUTA</button>
+            <button class="fbtn" onclick="setStatusFilter('REVOCADA',this)">REVOCADA</button>
+            <button class="fbtn" onclick="setStatusFilter('EXPIRADA',this)">EXPIRADA</button>
+            <button class="fbtn" onclick="setStatusFilter('PARCIAL',this)">PARCIAL</button>
+        </div>
+        <div class="filter-group">
+            <span class="filter-lbl">BUSCAR:</span>
+            <input type="text" id="search-input" placeholder="organismo, país..." oninput="applyFilters()">
+        </div>
+        <span id="filter-result">18 casos visibles</span>
+    </div>
+
+    <!-- TIMELINE -->
+    <div id="timeline">
+        <div id="no-results">&gt; NO HAY CASOS QUE COINCIDAN. AJUSTA LOS FILTROS.</div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer id="page-footer">
+        <h3>FUENTES Y METODOLOGÍA</h3>
+        <div class="source-grid">
+            <span class="source-item">Grain.org — Biodiversity Archives</span>
+            <span class="source-item">ETC Group — Patent Monitoring</span>
+            <span class="source-item">RAFI Communiqués (1994-2003)</span>
+            <span class="source-item">CBD / Nagoya Protocol docs</span>
+            <span class="source-item">INDECOPI Perú — Base Biopiratería</span>
+            <span class="source-item">Third World Network reports</span>
+            <span class="source-item">USPTO / EPO / WIPO databases</span>
+            <span class="source-item">Vandana Shiva — Research Foundation</span>
+            <span class="source-item">Dutfield, G. "Intellectual Property, Biogenetic Resources and Traditional Knowledge" (2004)</span>
+            <span class="source-item">African Centre for Biosafety</span>
+            <span class="source-item">COICA — Indigenous Organizations Amazon</span>
+            <span class="source-item">South African San Institute (SASI)</span>
+        </div>
+        <div class="cc-notice">
+            Esta herramienta es de código abierto y dominio público (CC0). Los datos pueden ser reproducidos, adaptados y distribuidos libremente.<br>
+            CONTRAGENÓMIC(A) :: contragenomica@proton.me :: contragenomica.org
+        </div>
+    </footer>
+
+    <script>
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // DATASET
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const CASOS = [
+      { id:'CASO-001', codigo:'OPERACION_VINCA', año:1958, organismo:'Catharanthus roseus', nombre_comun:'Vinca / Periwinkle', origen:['Madagascar'], codigos_pais:['MG'], region:'AFRICA', extraido_por:'Eli Lilly & Company', pais_extractor:'Estados Unidos', patente:'Múltiples (vincristine, vinblastine)', status:'VIGENTE', valor_estimado:'$100M+ / año en ventas de vincristina', descripcion:'Eli Lilly extrae los alcaloides vincristina y vinblastina de la vinca de Madagascar. Se convierten en quimioterapéuticos de primera línea para leucemia y linfoma de Hodgkin. Madagascar, uno de los países más pobres del mundo, no recibe ninguna compensación. El caso inspira directamente la creación del Convenio sobre Diversidad Biológica (CBD) en 1992.', resultado:'Madagascar nunca recibió compensación. El caso quedó impune al ocurrir antes del CBD.', figuras_clave:['Norman Farnsworth','R.L. Noble','C.T. Beer'], fuentes:['CBD history','WHO Essential Medicines List','Shaman Pharmaceuticals archives'] },
+      { id:'CASO-002', codigo:'OPERACION_AYAHUASCA', año:1986, organismo:'Banisteriopsis caapi', nombre_comun:'Ayahuasca / Yagé', origen:['Perú','Ecuador','Colombia','Bolivia'], codigos_pais:['PE','EC','CO','BO'], region:'LAC', extraido_por:'International Plant Medicine Corporation / Loren Miller', pais_extractor:'Estados Unidos', patente:'US Plant Patent PP5751', status:'EXPIRADA', valor_estimado:'Industria del turismo chamánico: $250M+', descripcion:'Loren Miller obtiene la patente PP5751 sobre una variedad de Banisteriopsis caapi que denomina "Da Vine". La planta es sagrada para pueblos amazónicos que la usan ceremonialmente desde hace milenios. La COICA junto con el Center for International Environmental Law presentan una impugnación formal. En 1999 la USPTO revoca la patente, pero en 2001 la reinstata bajo criterios técnicos. La patente expira finalmente en 2003.', resultado:'PARCIALMENTE REVOCADA. Primer caso donde pueblos indígenas amazónicos impugnaron exitosamente una patente ante USPTO.', figuras_clave:['Loren Miller','Glenn Switkes (Amazon Watch)','COICA'], fuentes:['US Patent PP5751','COICA filing 1994','Rural Advancement Foundation International'] },
+      { id:'CASO-003', codigo:'OPERACION_CORCUMA', año:1995, organismo:'Curcuma longa', nombre_comun:'Cúrcuma / Turmeric', origen:['India'], codigos_pais:['IN'], region:'ASIA', extraido_por:'University of Mississippi Medical Center', pais_extractor:'Estados Unidos', patente:'US Patent 5,401,504', status:'REVOCADA', valor_estimado:'Industria de suplementos: $3.64B en 2022', descripcion:'La Universidad de Mississippi obtiene la patente 5,401,504 sobre el uso de la cúrcuma para curar heridas. El problema: India usa la cúrcuma con ese fin documentado desde hace 6,000 años. El CSIR impugna la patente aportando evidencia de arte previo: textos sánscritos, publicaciones en revistas hindi de los años 40, y referencias a prácticas ayurvédicas. La USPTO revoca la patente en 1997. PRIMERA GRAN VICTORIA FORMAL.', resultado:'VICTORIA. Patente revocada por USPTO en agosto 1997. Sentó precedente de uso de conocimiento tradicional como arte previo.', figuras_clave:['R.A. Mashelkar (CSIR)','Vandana Shiva'], fuentes:['US Patent 5,401,504 (revocada)','CSIR challenge documentation','Nature 1997'] },
+      { id:'CASO-004', codigo:'OPERACION_NEEM', año:1994, organismo:'Azadirachta indica', nombre_comun:'Neem / Nim', origen:['India','Myanmar','Sri Lanka'], codigos_pais:['IN','MM','LK'], region:'ASIA', extraido_por:'W.R. Grace & Company / USDA', pais_extractor:'Estados Unidos', patente:'EP0436257 (EPO)', status:'REVOCADA', valor_estimado:'Mercado global de biopesticidas: $5B+', descripcion:'W.R. Grace obtiene la patente EP0436257 en Europa sobre un fungicida a base de neem. India usa el neem como pesticida, medicina y fertilizante desde hace más de 2,000 años — documentado en textos sánscritos del siglo V a.C. La Fundación de Investigación de Vandana Shiva, junto con el Parlamento Europeo Verde, impugnan la patente ante la EPO. Tras seis años de batalla legal, la EPO revoca la patente en 2000. En 2005 el tribunal de apelación confirma la revocación.', resultado:'VICTORIA. EPO revoca la patente en mayo 2000. Confirmado en apelación 2005. Caso paradigmático del movimiento global contra la biopiratería.', figuras_clave:['Vandana Shiva','W.R. Grace Inc.','EPO Third Opposition Division'], fuentes:['EPO Case T 0416/01','Research Foundation for Science report','Third World Network'] },
+      { id:'CASO-005', codigo:'OPERACION_QUINOA', año:1994, organismo:'Chenopodium quinoa', nombre_comun:'Quinoa / Quinua', origen:['Bolivia','Perú','Ecuador'], codigos_pais:['BO','PE','EC'], region:'LAC', extraido_por:'Colorado State University (Duane Johnson & Sarah Ward)', pais_extractor:'Estados Unidos', patente:'US Patent 5,304,718', status:'EXPIRADA', valor_estimado:'Mercado global quinoa: $1.5B en 2023', descripcion:'Los profesores Johnson y Ward de Colorado State University obtienen la patente 5,304,718 sobre una variante híbrida de quinoa denominada "Apelawa" — el grano que alimentó al Imperio Inca durante milenios. El gobierno boliviano y la Confederación Única de Trabajadores Campesinos de Bolivia protestan formalmente. Bajo presión diplomática y mediática, los investigadores no renuevan la patente.', resultado:'EXPIRADA sin renovación (1998) bajo presión política. No hubo revocación formal. El mercado de quinoa creció explosivamente sin compensación a comunidades andinas.', figuras_clave:['Duane Johnson','Sarah Ward','CSUTCB Bolivia'], fuentes:['US Patent 5,304,718','RAFI Communique 1997','Grain.org archives'] },
+      { id:'CASO-006', codigo:'OPERACION_HOODIA', año:1997, organismo:'Hoodia gordonii', nombre_comun:'Hoodia / Ghaap', origen:['Sudáfrica','Namibia','Botswana'], codigos_pais:['ZA','NA','BW'], region:'AFRICA', extraido_por:'CSIR / Phytopharm / Unilever', pais_extractor:'Reino Unido / Sudáfrica', patente:'ZA Patent 983170 / US 6,376,657', status:'PARCIAL', valor_estimado:'$21M pagados a Phytopharm. Mercado supresores apetito: $2.5B', descripcion:'El CSIR patenta el compuesto P57 extraído de la Hoodia, un cactus del Kalahari. Los San (Bosquimanos) lo han usado como supresor de hambre en cacerías durante miles de años. CSIR vende licencia a Phytopharm por £21M. Phytopharm sublicencia a Unilever por £25M. Los San no son consultados. Tras campaña del South African San Institute, CSIR negocia un acuerdo de distribución de beneficios en 2003. Primer acuerdo formal entre comunidad indígena africana y corporación de este tipo.', resultado:'ACUERDO PARCIAL. San recibieron acuerdo de reparto de regalías en 2003. El compuesto fue eventualmente abandonado por Unilever al no superar ensayos clínicos.', figuras_clave:['South African San Institute (SASI)','Roger Chennells (abogado San)','Phytopharm PLC'], fuentes:['CSIR-San benefit sharing agreement 2003','Dutfield 2004','ICTSD IP Review'] },
+      { id:'CASO-007', codigo:'OPERACION_BASMATI', año:1997, organismo:'Oryza sativa (variedades Basmati)', nombre_comun:'Arroz Basmati', origen:['India','Pakistán'], codigos_pais:['IN','PK'], region:'ASIA', extraido_por:'RiceTec Inc.', pais_extractor:'Estados Unidos', patente:'US Patent 5,663,484 (20 reivindicaciones)', status:'PARCIAL', valor_estimado:'Exportaciones basmati India+Pakistán: $4.5B/año', descripcion:'RiceTec Inc. (empresa texana controlada por el Príncipe Hans-Adam II de Liechtenstein) obtiene la patente 5,663,484 con 20 reivindicaciones sobre variedades de arroz "basmati-like". El basmati es cultivado en el subcontinente indio desde hace más de 250 años. India presenta 50.000 páginas de documentación histórica como arte previo. La USPTO cancela 15 de las 20 reivindicaciones en 2002.', resultado:'VICTORIA PARCIAL. 15/20 reivindicaciones canceladas (2002). RiceTec mantuvo 5 reivindicaciones. India/Pakistán preservaron denominación geográfica en UE.', figuras_clave:['RiceTec Inc.','Gobierno de India (CSIR)','APEDA India'], fuentes:['US Patent 5,663,484','India government challenge 2000','Economic Times India'] },
+      { id:'CASO-008', codigo:'OPERACION_ENOLA', año:1999, organismo:'Phaseolus vulgaris (var. amarilla)', nombre_comun:'Frijol Enola / Frijol Azufrado', origen:['México','Sinaloa / Sonora'], codigos_pais:['MX'], region:'LAC', extraido_por:'Larry Proctor / POD-NERS LLC', pais_extractor:'Estados Unidos', patente:'US Patents 5,894,079 y 5,933,407', status:'REVOCADA', valor_estimado:'Exportaciones frijol México-USA: $37M/año afectadas', descripcion:'Larry Proctor compra frijoles amarillos en un mercado de Sonora. Regresa a Colorado, "selecciona" la variedad durante dos años, y obtiene dos patentes reclamando la invención de los frijoles amarillos. Empieza a demandar a importadores de frijoles mexicanos, causando pérdidas millonarias a productores de Sinaloa. Tras 10 años de litigio, la USPTO cancela las patentes en 2009.', resultado:'VICTORIA. Patentes canceladas en 2009 tras 10 años. Productores mexicanos perdieron millones durante el proceso.', figuras_clave:['Larry Proctor (POD-NERS)','Centro Internacional de Agricultura Tropical (CIAT)','SENASICA México'], fuentes:['US Patents 5,894,079 / 5,933,407','GRAIN report 2001','USPTO Board of Patent Appeals 2009'] },
+      { id:'CASO-009', codigo:'OPERACION_CUPUACU', año:1998, organismo:'Theobroma grandiflorum', nombre_comun:'Cupuaçu', origen:['Brasil','Amazonia'], codigos_pais:['BR'], region:'LAC', extraido_por:'Asahi Foods Co. / Cupuaçu International (Japón)', pais_extractor:'Japón', patente:'Trademark "cupuaçu" + patents on derivatives (JP)', status:'REVOCADA', valor_estimado:'Mercado chocolates y cosméticos: potencial $500M', descripcion:'La empresa japonesa Asahi Foods registra la marca "cupuaçu" en Japón y Europa, y patenta productos derivados de la fruta amazónica. Cooperativas de productores de cupuaçu en Pará quedan bloqueadas para exportar bajo su propio nombre. La organización Amazonlink.org lanza la campaña "Salve o Cupuaçu". El movimiento lleva a la revocación de las marcas en Japón (2004) y Europa.', resultado:'VICTORIA. Marcas revocadas en Japón (2004) y otros territorios. Caso exitoso de campaña popular contra biopiratería.', figuras_clave:['Asahi Foods Co.','Amazonlink.org','Gobierno de Pará'], fuentes:['Amazonlink.org reports','Grain.org 2003','IP Watch 2004'] },
+      { id:'CASO-010', codigo:'OPERACION_BRAZZEIN', año:1994, organismo:'Pentadiplandra brazzeana', nombre_comun:'Oubli / Brazzein berry', origen:['Camerún','Gabón'], codigos_pais:['CM','GA'], region:'AFRICA', extraido_por:'Universidad de Wisconsin / Samuel Arling', pais_extractor:'Estados Unidos', patente:'US Patent 5,326,580', status:'VIGENTE', valor_estimado:'Mercado global edulcorantes naturales: $2.1B en 2025', descripcion:'El investigador Samuel Arling de la Universidad de Wisconsin patenta la brazzein, una proteína 500 veces más dulce que el azúcar, extraída del fruto oubli. Las comunidades del bosque tropical de Camerún y Gabón la usan desde tiempo inmemorial. La patente da derechos exclusivos sobre la proteína y su producción recombinante. No existe ningún acuerdo de beneficios con las comunidades fuente. La brazzein es considerada el próximo gran edulcorante natural.', resultado:'SIN RESOLUCIÓN. Patente vigente. Ningún mecanismo formal de protección. Comunidades afectadas sin representación legal.', figuras_clave:['Samuel Arling','Universidad de Wisconsin','African Centre for Biosafety'], fuentes:['US Patent 5,326,580','ETC Group report 2009','Dutfield "Intellectual Property, Biogenetic Resources"'] },
+      { id:'CASO-011', codigo:'OPERACION_MACA', año:2001, organismo:'Lepidium meyenii', nombre_comun:'Maca', origen:['Perú','Andes centrales'], codigos_pais:['PE'], region:'LAC', extraido_por:'Múltiples: Pure World Botanicals, Indiana University, Biotics Research', pais_extractor:'Estados Unidos', patente:'Múltiples (US 6,267,995 / US 6,428,824 entre otros)', status:'EN_DISPUTA', valor_estimado:'Mercado global maca: $250M+ anuales', descripcion:'Varios laboratorios estadounidenses patentan extractos y métodos de procesamiento de maca, una raíz cultivada en los Andes peruanos a más de 4,000 metros por comunidades quechua desde hace 3,000 años. Perú responde aprobando la Ley 27811 (2002), primera ley nacional explícita contra la biopiratería. La Comisión Nacional contra la Biopiratería identifica 16 familias de patentes sobre la maca como potencialmente violatorias.', resultado:'EN DISPUTA ACTIVA. Perú ha logrado revocar algunas patentes. Comisión Nacional contra la Biopiratería (INDECOPI) sigue activa.', figuras_clave:['INDECOPI Perú','Manuel Ruiz Muller','Ley 27811 (2002)'], fuentes:['Ley 27811 Perú','INDECOPI informes','CBD Technical Series No. 28'] },
+      { id:'CASO-012', codigo:'OPERACION_STEVIA', año:1995, organismo:'Stevia rebaudiana', nombre_comun:"Stevia / Ka'a he'ê", origen:['Paraguay','Brasil'], codigos_pais:['PY','BR'], region:'LAC', extraido_por:'Coca-Cola, Cargill, múltiples corporaciones', pais_extractor:'Estados Unidos / Multinacional', patente:'Más de 1,000 patentes sobre glucósidos de esteviol', status:'VIGENTE', valor_estimado:'Mercado global stevia: $800M en 2023, proyectado $1.7B en 2029', descripcion:"El pueblo Guaraní usa la stevia (ka'a he'ê = hierba dulce) como edulcorante y medicina desde hace siglos. El botánico Moisés Bertoni la documenta en 1899. Entre 1995 y 2010 corporaciones multinacionales lideradas por Coca-Cola (US 8,337,927) y Cargill (US 7,838,044) presentan más de 1,000 patentes sobre compuestos específicos de stevia. Los guaraní no son consultados. Paraguay y Brasil no reciben regalías.", resultado:'IMPUNE. Ninguna reparación. Más de 1,000 patentes activas. Paraguay intenta desarrollar industria propia sin acceso a patentes clave.', figuras_clave:['Moisés Bertoni (documentador)','The Coca-Cola Company','Cargill Inc.','Pueblo Guaraní Ava'], fuentes:['CBD Secretariat report on ABS','ETC Group "Who will control the green economy?"','Grain stevia briefing 2012'] },
+      { id:'CASO-013', codigo:'OPERACION_SANGRE', año:1993, organismo:'Croton lechleri', nombre_comun:'Sangre de Grado / Sangre de Drago', origen:['Perú','Ecuador','Colombia'], codigos_pais:['PE','EC','CO'], region:'LAC', extraido_por:'Shaman Pharmaceuticals / Napo Pharmaceuticals', pais_extractor:'Estados Unidos', patente:'Múltiples sobre proantocianidinas / crofelemer', status:'VIGENTE', valor_estimado:'Crofelemer (Fulyzaq) aprobado FDA 2012: ventas $50M+', descripcion:'Shaman Pharmaceuticals desarrolla antidiarreico SP-303 (crofelemer) basado en el látex de Croton lechleri usado por comunidades amazónicas para tratar diarrea y como cicatrizante. Cuando Shaman quiebra, Napo Pharmaceuticals adquiere los activos y obtiene aprobación FDA en 2012 bajo el nombre Fulyzaq para diarrea asociada a VIH/SIDA. Los acuerdos de beneficios con comunidades son disputados.', resultado:'COMPLEJO. Hay acuerdos de beneficios con algunas comunidades, pero el conocimiento fue industrializado y la mayor parte del valor queda en manos corporativas.', figuras_clave:['Shaman Pharmaceuticals','Napo Pharmaceuticals','AIDESEP Perú'], fuentes:['FDA approval Crofelemer 2012','Napo benefit-sharing reports','Biodiversity prospecting cases'] },
+      { id:'CASO-014', codigo:'OPERACION_UNA_GATO', año:1995, organismo:'Uncaria tomentosa / U. guianensis', nombre_comun:"Uña de Gato / Cat's Claw", origen:['Perú','Amazonia'], codigos_pais:['PE','BR','CO'], region:'LAC', extraido_por:'Múltiples (Immodal Pharmacal, Austrian Institute)', pais_extractor:'Austria / Estados Unidos / Alemania', patente:'EP0809503 y múltiples otros', status:'EN_DISPUTA', valor_estimado:'Mercado global: $40M anuales en suplementos', descripcion:'La uña de gato es usada por los Asháninka y otros pueblos amazónicos para tratar inflamación, artritis e infecciones. Entre 1994 y 2000, empresas austríacas, alemanas y estadounidenses presentan decenas de patentes sobre sus alcaloides oxindoles. Perú documenta el problema e incluye la uña de gato en sus mecanismos de protección bajo la Ley 27811.', resultado:'EN DISPUTA. Algunas patentes cuestionadas por Perú. Sin resolución definitiva. Comercio continúa sin beneficios a comunidades Asháninka.', figuras_clave:['AIDESEP','Comunidades Asháninka','INDECOPI Perú'], fuentes:['INDECOPI base de datos biopiratería','Grain briefing 1998','Shaman Pharmaceuticals docs'] },
+      { id:'CASO-015', codigo:'OPERACION_KAVA', año:1998, organismo:'Piper methysticum', nombre_comun:'Kava / Kawa', origen:['Vanuatu','Fiyi','Tonga','Samoa'], codigos_pais:['VU','FJ','TO','WS'], region:'OTRAS', extraido_por:'Múltiples empresas europeas y estadounidenses', pais_extractor:'Alemania / Estados Unidos', patente:'Múltiples sobre kavalactonas', status:'EN_DISPUTA', valor_estimado:'Mercado global kava: $120M anuales', descripcion:'El kava es la bebida ceremonial y social central de las culturas del Pacífico, con 3,000 años de uso documentado. Entre 1998 y 2003, empresas europeas y estadounidenses registran docenas de patentes sobre los kavalactonas para usos farmacéuticos. Los países del Pacífico responden con el "Pacific Model Law on Traditional Knowledge".', resultado:'EN DISPUTA. Países del Pacífico trabajan en marcos legales de protección. Mercado de kava sigue creciendo sin compensación adecuada.', figuras_clave:['Secretaría del Pacífico (SPC)','Gobierno de Vanuatu','SPACHEE'], fuentes:['SPACHEE Pacific traditional knowledge study','WIPO study on kava 2002','Pacific Islands Forum'] },
+      { id:'CASO-016', codigo:'OPERACION_PAPA_ANDINA', año:2008, organismo:'Solanum tuberosum + especies silvestres', nombre_comun:'Papa Andina / Potato', origen:['Perú','Bolivia','Ecuador'], codigos_pais:['PE','BO','EC'], region:'LAC', extraido_por:'Syngenta AG / múltiples corporaciones semilleras', pais_extractor:'Suiza / Multinacional', patente:'EP1812575 (resistencia a tizón tardío) + más de 50 patentes', status:'VIGENTE', valor_estimado:'Mercado global papa: $88B. Gen de resistencia: incalculable', descripcion:'La papa fue domesticada en los Andes hace 8,000 años. Las comunidades quechua y aymara conservan más de 4,000 variedades nativas. Syngenta y otras empresas semilleras patentan genes de resistencia extraídos de variedades silvestres de papa andina — incluyendo genes R que confieren resistencia al tizón tardío. Amenaza directa a soberanía alimentaria andina.', resultado:'VIGENTE y CRÍTICO. Más de 50 patentes activas sobre material genético de papa de origen andino. Amenaza directa a soberanía alimentaria.', figuras_clave:['Syngenta AG','Centro Internacional de la Papa (CIP)','Quechua-Aymara Association for Sustainable Livelihoods'], fuentes:['No Patents on Seeds campaign','CIP Annual Report','ETC Group patent monitoring'] },
+      { id:'CASO-017', codigo:'OPERACION_ACHIOTE', año:2002, organismo:'Bixa orellana', nombre_comun:'Achiote / Annatto / Bija', origen:['Brasil','Colombia','Perú','Caribe'], codigos_pais:['BR','CO','PE'], region:'LAC', extraido_por:'Chr. Hansen, Givaudan, DSM Nutritional Products', pais_extractor:'Dinamarca / Suiza', patente:'Múltiples sobre bixina, norbixina, extractos', status:'VIGENTE', valor_estimado:'Mercado colorantes naturales: $2.5B. Annatto: $300M+', descripcion:'El achiote colorea alimentos, pieles y telas en América indígena desde hace milenios. Los pueblos amazónicos y caribeños lo usan en rituales, medicina y cosmética. Corporaciones europeas patentan procesos de extracción, formas estabilizadas de bixina/norbixina, y aplicaciones específicas. El mercado global de colorantes naturales crece como alternativa a los sintéticos sin compensación a comunidades.', resultado:'IMPUNE. Múltiples patentes activas. Sin mecanismos de protección efectivos para comunidades originarias.', figuras_clave:['Chr. Hansen A/S','Givaudan SA','ANPOCS Brasil'], fuentes:['GRAIN briefing on natural colours','Biodiversity Heritage Library','CBD ABS Clearing House'] },
+      { id:'CASO-018', codigo:'OPERACION_ACAI', año:2004, organismo:'Euterpe oleracea', nombre_comun:'Açaí / Asaí', origen:['Brasil','Amazonia'], codigos_pais:['BR'], region:'LAC', extraido_por:'Múltiples: MonaVie, Sambazon, FutureCeuticals', pais_extractor:'Estados Unidos', patente:'Múltiples sobre extractos, mezclas y "superfoods"', status:'EN_DISPUTA', valor_estimado:'Mercado açaí: $1.02B en 2022, crece 12% anual', descripcion:'El açaí es alimento básico en el estado de Pará, consumido por comunidades ribereñas desde tiempos inmemoriales. En 2004-2010 empresas de bienestar estadounidenses comercializan el açaí como "superfood" y registran patentes sobre extractos y procesos. MonaVie construye un negocio de $750M. Las comunidades de Marajó ven cómo su fruta cotidiana se convierte en producto de lujo importado.', resultado:'PARCIAL. Brasil logró proteger denominación pero no evitar la extracción de valor. Comunidades locales no son las principales beneficiarias del mercado.', figuras_clave:['Governo do Pará','EMBRAPA','MonaVie LLC'], fuentes:['Embrapa Amazônia Oriental reports','Grain briefing 2007','American Journal of Clinical Nutrition açaí studies'] }
+    ];
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // STATE
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const filters = { region: 'TODOS', status: 'TODOS', search: '' };
+    const seenVigente = new Set();
+    const seenCards   = new Set();
+    const vigenteCasos = CASOS.filter(c => c.status === 'VIGENTE').map(c => c.id);
+
+    const STATUS_COLOR = {
+        VIGENTE:   'var(--vigente)',
+        EN_DISPUTA:'var(--disputa)',
+        REVOCADA:  'var(--revocada)',
+        EXPIRADA:  'var(--expirada)',
+        PARCIAL:   'var(--parcial)'
+    };
+
+    const STATUS_LABEL = {
+        VIGENTE:   '■ VIGENTE · HERIDA ABIERTA',
+        EN_DISPUTA:'▲ EN DISPUTA · BATALLA',
+        REVOCADA:  '✓ REVOCADA · VICTORIA',
+        EXPIRADA:  '○ EXPIRADA · RESULTADO MIXTO',
+        PARCIAL:   '◇ PARCIAL · INCOMPLETO'
+    };
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // RENDER
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function buildTimeline() {
+        const tl = document.getElementById('timeline');
+        // Clear existing cards (keep no-results div)
+        [...tl.querySelectorAll('.year-group')].forEach(el => el.remove());
+
+        // Group by year
+        const byYear = {};
+        CASOS.forEach(c => {
+            if (!byYear[c.año]) byYear[c.año] = [];
+            byYear[c.año].push(c);
+        });
+
+        Object.keys(byYear).sort((a,b) => a-b).forEach(year => {
+            const group = document.createElement('div');
+            group.className = 'year-group';
+            group.dataset.year = year;
+
+            const cases = byYear[year];
+            group.innerHTML = `
+                <div class="year-marker">
+                    <div class="year-dot"></div>
+                    <span class="year-label">${year}</span>
+                    <span class="year-count">${cases.length} caso${cases.length>1?'s':''}</span>
+                </div>
+                <div class="cases-in-year"></div>`;
+
+            const container = group.querySelector('.cases-in-year');
+            cases.forEach(caso => container.appendChild(buildCard(caso)));
+
+            tl.insertBefore(group, document.getElementById('no-results'));
+        });
+
+        updateStats();
+    }
+
+    function buildCard(caso) {
+        const color = STATUS_COLOR[caso.status];
+        const card  = document.createElement('div');
+        card.className = 'case-card';
+        card.id = `card-${caso.id}`;
+        card.dataset.id     = caso.id;
+        card.dataset.status = caso.status;
+        card.dataset.region = caso.region;
+        card.style.setProperty('--card-color', color);
+
+        card.innerHTML = `
+            <div class="watermark">CLASIFICADO</div>
+            <div class="card-head">
+                <div class="card-top-row">
+                    <span class="card-code">${caso.id} · <span class="op-name">${caso.codigo}</span></span>
+                    <span class="status-badge badge-${caso.status}">${STATUS_LABEL[caso.status]}</span>
+                </div>
+                <div class="card-organism">${caso.organismo}</div>
+                <div class="card-common">${caso.nombre_comun}</div>
+                <div class="card-meta">
+                    <span>ORIGEN: <span class="accent">${caso.origen.join(' / ')}</span></span>
+                    <span>EXTRAÍDO POR: <span class="accent">${caso.extraido_por}</span></span>
+                    <span>EXTRACTOR: <span class="accent">${caso.pais_extractor}</span></span>
+                </div>
+                <div class="card-patent">PATENTE: ${caso.patente}</div>
+                <span class="expand-hint">[+ ABRIR EXPEDIENTE]</span>
+            </div>
+            <div class="card-body">
+                <div class="card-body-inner">
+                    <div>
+                        <span class="desclasificado-stamp">DESCLASIFICADO</span>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">DESCRIPCIÓN DEL CASO</div>
+                        <div class="dossier-text" id="desc-${caso.id}"></div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">VALOR ECONÓMICO ESTIMADO</div>
+                        <div class="valor-highlight">${caso.valor_estimado}</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">RESULTADO</div>
+                        <div class="result-text">${caso.resultado}</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">FIGURAS CLAVE</div>
+                        <div class="figuras-list">${caso.figuras_clave.map(f=>`<span class="figura-tag">${f}</span>`).join('')}</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">FUENTES DOCUMENTALES</div>
+                        <div class="fuentes-list">${caso.fuentes.map(f=>`<span>${f}</span><br>`).join('')}</div>
+                    </div>
+                </div>
+            </div>`;
+
+        card.addEventListener('click', () => toggleCard(caso.id, caso));
+        return card;
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // TOGGLE CARD
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function toggleCard(id, caso) {
+        const card = document.getElementById(`card-${id}`);
+        const isOpen = card.classList.contains('open');
+
+        if (isOpen) {
+            card.classList.remove('open');
+            card.querySelector('.expand-hint').textContent = '[+ ABRIR EXPEDIENTE]';
+            return;
+        }
+
+        card.classList.add('open');
+        card.querySelector('.expand-hint').textContent = '[− CERRAR EXPEDIENTE]';
+
+        const descEl = document.getElementById(`desc-${id}`);
+
+        if (!seenCards.has(id)) {
+            seenCards.add(id);
+            // Typewriter on first open
+            typewrite(descEl, caso.descripcion);
+
+            if (caso.status === 'VIGENTE') {
+                seenVigente.add(id);
+                if (seenVigente.size === vigenteCasos.length) {
+                    setTimeout(mostrarAlerta, 1200);
+                }
+            }
+        } else {
+            descEl.textContent = caso.descripcion;
+        }
+    }
+
+    function typewrite(el, text, speed = 12) {
+        el.textContent = '';
+        el.classList.add('typewriter');
+        let i = 0;
+        const timer = setInterval(() => {
+            el.textContent += text[i];
+            i++;
+            if (i >= text.length) {
+                clearInterval(timer);
+                el.classList.remove('typewriter');
+            }
+        }, speed);
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // FILTERS
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function setFilter(key, val, btn) {
+        filters[key] = val;
+        btn.closest('.filter-group').querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+    }
+
+    function setStatusFilter(val, btn) {
+        filters.status = val;
+        btn.closest('.filter-group').querySelectorAll('.fbtn').forEach(b => {
+            b.classList.remove('active','v-active','d-active','r-active','e-active','p-active');
+        });
+        const classMap = { VIGENTE:'v-active', EN_DISPUTA:'d-active', REVOCADA:'r-active', EXPIRADA:'e-active', PARCIAL:'p-active' };
+        btn.classList.add(classMap[val] || 'active');
+        applyFilters();
+    }
+
+    function applyFilters() {
+        filters.search = document.getElementById('search-input').value.toLowerCase();
+        let visible = 0;
+
+        document.querySelectorAll('.case-card').forEach(card => {
+            const id    = card.dataset.id;
+            const caso  = CASOS.find(c => c.id === id);
+            let show    = true;
+
+            if (filters.region !== 'TODOS' && caso.region !== filters.region) show = false;
+            if (filters.status !== 'TODOS' && caso.status !== filters.status) show = false;
+            if (filters.search) {
+                const haystack = `${caso.organismo} ${caso.nombre_comun} ${caso.origen.join(' ')} ${caso.extraido_por} ${caso.pais_extractor}`.toLowerCase();
+                if (!haystack.includes(filters.search)) show = false;
+            }
+
+            card.style.display = show ? 'block' : 'none';
+            if (show) visible++;
+        });
+
+        // Hide empty year groups
+        document.querySelectorAll('.year-group').forEach(g => {
+            const hasVisible = [...g.querySelectorAll('.case-card')].some(c => c.style.display !== 'none');
+            g.style.display = hasVisible ? 'block' : 'none';
+        });
+
+        const noRes = document.getElementById('no-results');
+        noRes.style.display = visible === 0 ? 'block' : 'none';
+
+        document.getElementById('filter-result').textContent = `${visible} caso${visible!==1?'s':''} visible${visible!==1?'s':''}`;
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // STATS
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function updateStats() {
+        const vigentes  = CASOS.filter(c => c.status === 'VIGENTE').length;
+        const disputas  = CASOS.filter(c => c.status === 'EN_DISPUTA').length;
+        const paises    = new Set(CASOS.flatMap(c => c.codigos_pais)).size;
+
+        document.getElementById('st-vigente').textContent = vigentes;
+        document.getElementById('st-disputa').textContent = disputas;
+        document.getElementById('st-paises').textContent  = paises + '+';
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // DAMAGE COUNTER ANIMATION
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function animateDamage() {
+        const target   = 15000000000;
+        const el       = document.getElementById('damage-counter');
+        const duration = 3500;
+        const steps    = 80;
+        const inc      = target / steps;
+        let current    = 0;
+        let count      = 0;
+
+        const t = setInterval(() => {
+            current += inc;
+            count++;
+            const display = Math.floor(current);
+            el.textContent = '$' + display.toLocaleString('es-ES') + (count >= steps ? '+' : '...');
+            if (count >= steps) {
+                clearInterval(t);
+                el.textContent = '>$15.000.000.000 USD';
+            }
+        }, duration / steps);
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ALERTA
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function mostrarAlerta() {
+        document.getElementById('alerta-overlay').style.display = 'flex';
+    }
+
+    function cerrarAlerta() {
+        document.getElementById('alerta-overlay').style.display = 'none';
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CLOCK
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function updateClock() {
+        document.getElementById('clock').textContent =
+            new Date().toLocaleTimeString('es-ES', { hour12: false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // INIT
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    buildTimeline();
+    animateDamage();
+    </script>
+</body>
+</html>

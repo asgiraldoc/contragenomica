@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUIEN_FINANCIA // CONTRAGENÓMICA</title>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { display:flex; flex-direction:column; min-height:100vh; overflow-x:hidden; }
+
+        /* ── HEADER ─────────────────────── */
+        #hdr {
+            border-bottom: 2px solid var(--phosphor-main);
+            padding: 1rem 1.5rem 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-shrink: 0;
+        }
+        #hdr h1 { font-size:2rem; border:none; padding:0; margin:0; letter-spacing:.06em; line-height:1; }
+        #hdr h1 span { color:#ff3333; }
+        .hdr-sub  { font-size:.85rem; color:var(--phosphor-dim); margin-top:.3rem; letter-spacing:.1em; }
+        .hdr-quote {
+            border-left: 2px solid var(--phosphor-main);
+            padding: .4rem 0 .4rem .8rem;
+            font-size: 1rem;
+            color: var(--phosphor-main);
+            margin-top: .5rem;
+            font-style: italic;
+        }
+        .hdr-right { text-align:right; font-size:.9rem; color:var(--phosphor-dim); line-height:2; flex-shrink:0; }
+
+        /* ── LOADING ─────────────────────── */
+        #loading-state { flex:1; display:flex; flex-direction:column; }
+        #dna-canvas { display:block; flex:1; }
+        #progress-log {
+            border-top: 1px solid var(--phosphor-dim);
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            color: var(--phosphor-dim);
+            min-height: 8rem;
+            line-height: 2;
+            background: rgba(0,10,0,0.4);
+        }
+        .log-line { margin:0; }
+        .log-line.warn  { color:#ffff33; }
+        .log-line.alert { color:#ff3333; font-size:1.1rem; }
+        .log-line.ok    { color:var(--phosphor-main); }
+
+        /* ── MAIN ────────────────────────── */
+        #main-view { display:none; flex-direction:column; flex:1; }
+
+        /* Alert banner */
+        #alert-banner {
+            background: rgba(255,51,51,0.08);
+            border-top:    1px solid #ff3333;
+            border-bottom: 1px solid #ff3333;
+            padding: .8rem 1.5rem;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #ff3333;
+        }
+        #alert-banner strong { font-size:1.4rem; text-shadow:0 0 10px rgba(255,51,51,.7); }
+
+        /* Stats strip */
+        #stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4,1fr);
+            border-bottom: 1px solid var(--phosphor-dim);
+        }
+        .sc { padding:.9rem 1.2rem; border-right:1px solid var(--phosphor-dim); }
+        .sc:last-child { border-right:none; }
+        .sc-lbl { font-size:.72rem; color:var(--phosphor-dim); letter-spacing:.12em; }
+        .sc-val { font-size:2rem; line-height:1; }
+        .sc-val.red   { color:#ff3333; text-shadow:0 0 8px rgba(255,51,51,.5); }
+        .sc-val.green { color:var(--phosphor-main); text-shadow:0 0 8px rgba(0,255,65,.4); }
+        .sc-val.yellow{ color:#ffff33; }
+
+        /* Region filter */
+        #region-bar {
+            padding:.7rem 1.5rem;
+            border-bottom:1px solid var(--phosphor-dim);
+            background: rgba(0,20,0,.4);
+            display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+        }
+        .rfbtn {
+            background:transparent; border:1px solid var(--phosphor-dim);
+            color:var(--phosphor-dim); font-family:'VT323',monospace;
+            font-size:.95rem; padding:2px 14px; cursor:pointer; transition:all .15s;
+        }
+        .rfbtn:hover  { border-color:var(--phosphor-main); color:var(--phosphor-main); }
+        .rfbtn.active { background:var(--phosphor-main); color:#000; border-color:var(--phosphor-main); }
+
+        /* Weight toggle */
+        #weight-toggle {
+            margin-left:auto; display:flex; align-items:center; gap:.5rem;
+            font-size:.85rem; color:var(--phosphor-dim);
+        }
+        .wbtn {
+            background:transparent; border:1px solid var(--phosphor-dim);
+            color:var(--phosphor-dim); font-family:'VT323',monospace;
+            font-size:.85rem; padding:1px 10px; cursor:pointer; transition:all .15s;
+        }
+        .wbtn.active { background:var(--phosphor-dim); color:#000; }
+
+        /* Charts grid */
+        #charts-grid {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            border-bottom: 1px solid var(--phosphor-dim);
+            min-height: 340px;
+        }
+
+        /* Donut panel */
+        #donut-panel {
+            border-right: 1px solid var(--phosphor-dim);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        #donut-panel h2 {
+            font-size:1rem; border:none; padding:0; color:var(--phosphor-dim);
+            letter-spacing:.15em; width:100%; text-align:center;
+        }
+        #donut-svg { overflow:visible; }
+        #donut-legend { width:100%; }
+        .legend-row {
+            display:flex; align-items:center; gap:.6rem;
+            font-size:.95rem; margin-bottom:.3rem;
+        }
+        .legend-dot { width:12px; height:12px; flex-shrink:0; }
+        .legend-label { color:var(--phosphor-dim); flex:1; }
+        .legend-val   { color:var(--phosphor-main); }
+
+        /* Funder bars panel */
+        #funders-panel { padding:1.2rem 1.5rem; overflow-y:auto; }
+        #funders-panel h2 {
+            font-size:1rem; border:none; padding:0; margin-bottom:1rem;
+            color:var(--phosphor-dim); letter-spacing:.15em;
+        }
+        .fbar-row { display:flex; align-items:center; gap:.8rem; margin-bottom:.6rem; font-size:.95rem; }
+        .fbar-name { width:200px; flex-shrink:0; color:var(--phosphor-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .fbar-track { flex:1; background:rgba(0,143,17,.15); position:relative; height:18px; }
+        .fbar-fill  { height:100%; transition:width .6s ease; }
+        .fbar-count { width:50px; flex-shrink:0; text-align:right; }
+
+        /* Country table */
+        #country-section {
+            padding:1.5rem;
+            border-bottom:1px solid var(--phosphor-dim);
+        }
+        #country-section h2 {
+            font-size:1rem; border:none; padding:0; margin-bottom:1rem;
+            color:var(--phosphor-dim); letter-spacing:.15em;
+        }
+        #country-table {
+            width:100%; border-collapse:collapse; font-size:.95rem;
+        }
+        #country-table th {
+            border-bottom:1px solid var(--phosphor-main);
+            padding:.4rem .8rem; text-align:left;
+            font-size:.75rem; letter-spacing:.12em; color:var(--phosphor-dim);
+        }
+        #country-table td { padding:.5rem .8rem; border-bottom:1px solid rgba(0,143,17,.2); }
+        #country-table tr:hover td { background:rgba(0,255,65,.05); }
+        .dep-bar-wrap { position:relative; height:14px; background:rgba(255,51,51,.1); }
+        .dep-bar-fill { height:100%; background:#ff3333; }
+        .dep-pct { font-size:.85rem; }
+        .dep-pct.high { color:#ff3333; text-shadow:0 0 5px rgba(255,51,51,.5); }
+        .dep-pct.mid  { color:#ffff33; }
+        .dep-pct.low  { color:var(--phosphor-main); }
+
+        /* Manifesto */
+        #manifesto {
+            padding:2rem 2rem 1.5rem;
+            border-top:1px solid var(--phosphor-dim);
+            font-size:1rem; line-height:2;
+            color:var(--phosphor-dim);
+        }
+        #manifesto h3 { font-size:1rem; color:var(--phosphor-main); border:none; padding:0; letter-spacing:.15em; margin-bottom:.5rem; }
+        #manifesto p  { margin-bottom:.8rem; }
+        #manifesto em { color:var(--phosphor-main); font-style:normal; }
+
+        /* ── RESPONSIVE ──────────────────── */
+        @media (max-width:720px) {
+            #charts-grid { grid-template-columns:1fr; }
+            #donut-panel  { border-right:none; border-bottom:1px solid var(--phosphor-dim); }
+            #stats-strip  { grid-template-columns:repeat(2,1fr); }
+            .fbar-name    { width:130px; }
+        }
+
+        /* No data */
+        #no-data-banner {
+            display:none; padding:2rem; text-align:center;
+            font-size:1.1rem; color:#ffff33; border:1px solid #ffff33;
+            margin:2rem; line-height:2;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="crt-flicker"></div>
+
+    <!-- HEADER -->
+    <header id="hdr">
+        <div>
+            <a href="../pages/propaganda.html" class="back-link" style="margin-bottom:.4rem">&lt;&lt; PROPAGANDA</a>
+            <h1>QUIEN<span>_</span>FINANCIA<span>.exe</span></h1>
+            <div class="hdr-sub">Mapeo de financiamiento genómico :: Sur Global :: OpenAlex API</div>
+            <div class="hdr-quote">"El que paga, controla la agenda."</div>
+        </div>
+        <div class="hdr-right">
+            <span id="clock">00:00:00</span><br>
+            SYS.ROOT.ADMIN<br>
+            <span class="blink-cursor"></span>
+        </div>
+    </header>
+
+    <!-- LOADING STATE -->
+    <div id="loading-state">
+        <canvas id="dna-canvas"></canvas>
+        <div id="progress-log">
+            <p class="log-line" id="log-init">Inicializando consulta a OpenAlex API...</p>
+        </div>
+    </div>
+
+    <!-- MAIN VIEW -->
+    <div id="main-view">
+
+        <!-- Alert banner -->
+        <div id="alert-banner"></div>
+
+        <!-- Stats strip -->
+        <div id="stats-strip">
+            <div class="sc">
+                <div class="sc-lbl">PAPERS ANALIZADOS</div>
+                <div class="sc-val" id="st-total">—</div>
+            </div>
+            <div class="sc">
+                <div class="sc-lbl">CON DATOS DE FINANCIAMIENTO</div>
+                <div class="sc-val" id="st-funded">—</div>
+            </div>
+            <div class="sc">
+                <div class="sc-lbl">% FINANCIADO DESDE EL NORTE</div>
+                <div class="sc-val red" id="st-norte-pct">—</div>
+            </div>
+            <div class="sc">
+                <div class="sc-lbl">FONDOS SOBERANOS DEL SUR</div>
+                <div class="sc-val green" id="st-sur-pct">—</div>
+            </div>
+        </div>
+
+        <!-- Region filter -->
+        <div id="region-bar">
+            <span style="font-size:.8rem;color:var(--phosphor-dim);letter-spacing:.1em">REGIÓN:</span>
+            <button class="rfbtn active" onclick="switchRegion('TODOS',this)">TODOS</button>
+            <button class="rfbtn" onclick="switchRegion('LAC',this)">LAC</button>
+            <button class="rfbtn" onclick="switchRegion('AFRICA',this)">AFRICA</button>
+            <button class="rfbtn" onclick="switchRegion('ASIA',this)">ASIA SUR/SE</button>
+            <div id="weight-toggle">
+                <span>VER:</span>
+                <button class="wbtn active" id="wb-papers" onclick="switchWeight('papers',this)">PAPERS</button>
+                <button class="wbtn" id="wb-citas" onclick="switchWeight('citas',this)">PONDERADO POR CITAS</button>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div id="charts-grid">
+            <div id="donut-panel">
+                <h2>DISTRIBUCIÓN DE FINANCIAMIENTO</h2>
+                <svg id="donut-svg" width="240" height="240"></svg>
+                <div id="donut-legend"></div>
+            </div>
+            <div id="funders-panel">
+                <h2>TOP FINANCIADORES (por papers)</h2>
+                <div id="funder-bars"></div>
+            </div>
+        </div>
+
+        <!-- No data -->
+        <div id="no-data-banner">
+            ⚠ SIN DATOS SUFICIENTES PARA ESTE FILTRO.<br>
+            El porcentaje de papers con metadatos de financiamiento varía por región y período.
+        </div>
+
+        <!-- Country table -->
+        <div id="country-section">
+            <h2>ÍNDICE DE DEPENDENCIA POR PAÍS</h2>
+            <table id="country-table">
+                <thead>
+                    <tr>
+                        <th>PAÍS</th>
+                        <th>REGIÓN</th>
+                        <th>PAPERS</th>
+                        <th>% DEP. NORTE</th>
+                        <th>DEPENDENCIA</th>
+                        <th>PRINCIPAL FINANCIADOR NORTE</th>
+                    </tr>
+                </thead>
+                <tbody id="country-tbody"></tbody>
+            </table>
+        </div>
+
+        <!-- Manifesto -->
+        <div id="manifesto">
+            <h3>ANÁLISIS :: LA ESTRUCTURA DEL PODER CIENTÍFICO</h3>
+            <p>
+                Los datos de financiamiento revelan una <em>arquitectura de dependencia</em> sistemática:
+                la mayor parte de la investigación genómica del Sur Global depende de fondos del Norte Global —
+                NIH, Wellcome Trust, Gates Foundation — cuyos comités de revisión, prioridades de publicación
+                y criterios de evaluación son definidos en Washington, Londres y Ginebra.
+            </p>
+            <p>
+                Esta dependencia no es accidental. Es el resultado de décadas de ajuste estructural que
+                desmantelaron sistemas nacionales de ciencia, y de una arquitectura de propiedad intelectual
+                que convierte el conocimiento del Sur en <em>materia prima exportable</em>.
+                El que financia, define qué se investiga, cómo se publica, y a quién le pertenece.
+            </p>
+            <p>
+                <em>Fuente de datos:</em> OpenAlex API (CC0) · papers de genómica (concepto C2522767166) ·
+                países del Sur Global · 2018–2024 · top 200 citados por región ·
+                campo <code>awards</code> para financiadores explícitos.
+                Cobertura de financiamiento: variable (~40-70% de papers tienen metadatos de funder).
+            </p>
+        </div>
+    </div>
+
+    <script>
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CONFIG
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const BASE    = 'https://api.openalex.org';
+    const MAILTO  = 'mailto=contragenomica@proton.me';
+    const CONCEPT = 'C2522767166'; // Genomics
+
+    const REGION_DEF = {
+        LAC:    { label:'LAC',   full:'Latinoamérica y Caribe', countries:'br|mx|co|ar|cl|pe|ec|bo|uy|cr|cu|py' },
+        AFRICA: { label:'AFR',   full:'África Sub-Sahariana', countries:'za|ng|ke|et|gh|tz|ug|cm|ma|sn|rw|zm' },
+        ASIA:   { label:'ASIA',  full:'Asia del Sur y SE', countries:'in|id|th|ph|vn|bd|pk|lk|mm|np|kh' }
+    };
+
+    const COUNTRY_NAMES = {
+        br:'Brasil',mx:'México',co:'Colombia',ar:'Argentina',cl:'Chile',pe:'Perú',
+        ec:'Ecuador',bo:'Bolivia',uy:'Uruguay',cr:'Costa Rica',cu:'Cuba',py:'Paraguay',
+        za:'Sudáfrica',ng:'Nigeria',ke:'Kenia',et:'Etiopía',gh:'Ghana',tz:'Tanzania',
+        ug:'Uganda',cm:'Camerún',ma:'Marruecos',sn:'Senegal',rw:'Ruanda',zm:'Zambia',
+        in:'India',id:'Indonesia',th:'Tailandia',ph:'Filipinas',vn:'Vietnam',
+        bd:'Bangladesh',pk:'Pakistán',lk:'Sri Lanka',mm:'Myanmar',np:'Nepal',kh:'Camboya'
+    };
+
+    const SOUTH_CC = new Set(Object.keys(COUNTRY_NAMES));
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // FUNDER CLASSIFIER
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const SKIP_KEYWORDS = ['university','universidad','université','universität','universidade',
+        'università','universiti','hospital','health system','health centre','medical center',
+        'college of medicine','school of medicine','faculty of medicine','instituto nacional de',
+        'los alamos','oak ridge national','national nuclear','pacific northwest national',
+        'brookhaven national','argonne national','sandia national','lawrence livermore',
+        'lawrence berkeley'];
+
+    function classifyFunder(raw) {
+        if (!raw) return null;
+        const n = raw.toLowerCase().trim();
+
+        if (SKIP_KEYWORDS.some(k => n.includes(k))) return null;
+
+        // ─── USA ───
+        if (/\bnih\b/.test(n) || n.includes('national institutes of health')) return {cat:'USA',abbr:'NIH',label:'NIH (USA)'};
+        if (n.includes('national institute of allergy')) return {cat:'USA',abbr:'NIH',label:'NIH (USA)'};
+        if (n.includes('national cancer institute') && !n.includes('japan')) return {cat:'USA',abbr:'NIH',label:'NIH (USA)'};
+        if (n.includes('national human genome')) return {cat:'USA',abbr:'NIH',label:'NIH (USA)'};
+        if (n.includes('national institute of general medical')) return {cat:'USA',abbr:'NIH',label:'NIH (USA)'};
+        if (n.includes('national heart, lung') || n.includes('nhlbi')) return {cat:'USA',abbr:'NIH',label:'NIH (USA)'};
+        if (n.includes('national eye institute') || n.includes('national institute of diabetes') || n.includes('national institute on aging') || n.includes('national institute of neurological') || n.includes('national institute of child')) return {cat:'USA',abbr:'NIH',label:'NIH (USA)'};
+        if (/\bnsf\b/.test(n) || n.includes('national science foundation') && !n.includes('china')) return {cat:'USA',abbr:'NSF',label:'NSF (USA)'};
+        if (n.includes('directorate for biological sciences')) return {cat:'USA',abbr:'NSF',label:'NSF (USA)'};
+        if (n.includes('howard hughes')) return {cat:'USA',abbr:'HHMI',label:'HHMI (USA)'};
+        if (n.includes('gates foundation') || n.includes('bill & melinda gates') || n.includes('bill and melinda gates')) return {cat:'USA',abbr:'GATES',label:'Gates Foundation'};
+        if (n.includes('department of energy') && !n.includes('india')) return {cat:'USA',abbr:'DOE',label:'DOE (USA)'};
+        if (n.includes('simons foundation')) return {cat:'USA',abbr:'SIMONS',label:'Simons Foundation (USA)'};
+        if (n.includes('chan zuckerberg')) return {cat:'USA',abbr:'CZI',label:'Chan Zuckerberg (USA)'};
+        if (n.includes('national institute of mental health')) return {cat:'USA',abbr:'NIH',label:'NIH (USA)'};
+        if (n.includes('us department of veterans affairs')) return {cat:'USA',abbr:'VA',label:'Dep. Veteranos (USA)'};
+        if (n.includes('american cancer society') && !n.includes('journal')) return {cat:'USA',abbr:'ACS',label:'Am. Cancer Society (USA)'};
+        if (n.includes('defense advanced research')) return {cat:'USA',abbr:'DARPA',label:'DARPA (USA)'};
+
+        // ─── UK ───
+        if (n.includes('wellcome')) return {cat:'UK',abbr:'WELLCOME',label:'Wellcome Trust (UK)'};
+        if ((n.includes('medical research council') || n.includes(' mrc')) && !n.includes('south africa') && !n.includes('canada')) return {cat:'UK',abbr:'MRC',label:'MRC/UKRI (UK)'};
+        if (n.includes('uk research and innovation') || n === 'ukri') return {cat:'UK',abbr:'UKRI',label:'UKRI (UK)'};
+        if (n.includes('biotechnology and biological') || /\bbbsrc\b/.test(n)) return {cat:'UK',abbr:'BBSRC',label:'BBSRC/UKRI (UK)'};
+        if (n.includes('cancer research uk') || n.includes('cancer research united kingdom')) return {cat:'UK',abbr:'CRUK',label:'Cancer Research UK'};
+        if (n.includes('engineering and physical sciences') || /\bepsrc\b/.test(n)) return {cat:'UK',abbr:'EPSRC',label:'EPSRC/UKRI (UK)'};
+        if (n.includes('science and technology facilities') || /\bstfc\b/.test(n)) return {cat:'UK',abbr:'STFC',label:'STFC (UK)'};
+        if (n.includes('leverhulme trust')) return {cat:'UK',abbr:'LEV',label:'Leverhulme (UK)'};
+
+        // ─── EU ───
+        if (n.includes('european research council') || /\berc\b.*european/.test(n)) return {cat:'EU',abbr:'ERC',label:'ERC (UE)'};
+        if (n.includes('horizon 2020') || n.includes('h2020') || n.includes('horizon2020')) return {cat:'EU',abbr:'H2020',label:'Horizon 2020 (UE)'};
+        if (n.includes('european commission') && !n.includes('horizon')) return {cat:'EU',abbr:'EC',label:'Comisión Europea'};
+        if (n.includes('deutsche forschungsgemeinschaft') || /\bdfg\b/.test(n)) return {cat:'EU',abbr:'DFG',label:'DFG (Alemania)'};
+        if (n.includes('helmholtz')) return {cat:'EU',abbr:'HGF',label:'Helmholtz (Alemania)'};
+        if (n.includes('max planck') || n.includes('max-planck')) return {cat:'EU',abbr:'MPG',label:'Max Planck (Alemania)'};
+        if (n.includes('agence nationale de la recherche') || /\banr\b/.test(n)) return {cat:'EU',abbr:'ANR',label:'ANR (Francia)'};
+        if (n.includes('swedish research council') || n.includes('vetenskapsrådet')) return {cat:'EU',abbr:'VR',label:'Vetenskapsrådet (Suecia)'};
+        if (n.includes('norwegian research council') || n.includes('norges forskningsråd')) return {cat:'EU',abbr:'NFR',label:'NRC (Noruega)'};
+        if (n.includes('novo nordisk') && !n.includes('insulin')) return {cat:'EU',abbr:'NNF',label:'Novo Nordisk (Dinamarca)'};
+        if (n.includes('danish council') || n.includes('danmarks frie forskningsfond')) return {cat:'EU',abbr:'DFF',label:'DFF (Dinamarca)'};
+        if (n.includes('swiss national science') || /\bsnsf\b/.test(n)) return {cat:'EU',abbr:'SNSF',label:'SNSF (Suiza)'};
+        if (n.includes('italian ministry') || n.includes('ministero dell')) return {cat:'EU',abbr:'MIUR',label:'MIUR (Italia)'};
+        if (n.includes('consejo superior de investigaciones') || /\bcsic\b/.test(n)) return {cat:'EU',abbr:'CSIC',label:'CSIC (España)'};
+        if (n.includes('zonmw') || n.includes('zon mw')) return {cat:'EU',abbr:'ZON',label:'ZonMw (Países Bajos)'};
+
+        // ─── Otro Norte (Canada, Australia, Japan) ───
+        if (n.includes('canadian institutes of health') || /\bcihr\b/.test(n)) return {cat:'OTRO_N',abbr:'CIHR',label:'CIHR (Canadá)'};
+        if (n.includes('natural sciences and engineering') || /\bnserc\b/.test(n)) return {cat:'OTRO_N',abbr:'NSERC',label:'NSERC (Canadá)'};
+        if (n.includes('national health and medical research') || /\bnhmrc\b/.test(n)) return {cat:'OTRO_N',abbr:'NHMRC',label:'NHMRC (Australia)'};
+        if (n.includes('japan society') || /\bjsps\b/.test(n)) return {cat:'OTRO_N',abbr:'JSPS',label:'JSPS (Japón)'};
+        if (n.includes('japan agency for medical research') || /\bamed\b/.test(n)) return {cat:'OTRO_N',abbr:'AMED',label:'AMED (Japón)'};
+        if (n.includes('national research foundation of korea') || /\bnrf\b.*korea/.test(n)) return {cat:'OTRO_N',abbr:'NRF_KR',label:'NRF (Corea)'};
+
+        // ─── China ───
+        if (n.includes('national natural science foundation of china') || /\bnsfc\b/.test(n)) return {cat:'CHINA',abbr:'NSFC',label:'NSFC (China)'};
+        if (n.includes('chinese academy of sciences') || /\bcas\b/.test(n)) return {cat:'CHINA',abbr:'CAS',label:'CAS (China)'};
+        if (n.includes('ministry of science and technology') && n.includes('china')) return {cat:'CHINA',abbr:'MOST_CN',label:'MOST (China)'};
+
+        // ─── Sur · LAC ───
+        if (n.includes('fapesp')) return {cat:'SUR',abbr:'FAPESP',label:'FAPESP (Brasil)'};
+        if (n.includes('conselho nacional de desenvolvimento') || /\bcnpq\b/.test(n)) return {cat:'SUR',abbr:'CNPq',label:'CNPq (Brasil)'};
+        if (n.includes('coordenação de aperfeiçoamento') || /\bcapes\b/.test(n)) return {cat:'SUR',abbr:'CAPES',label:'CAPES (Brasil)'};
+        if (n.includes('financiadora de estudos') || /\bfinep\b/.test(n)) return {cat:'SUR',abbr:'FINEP',label:'FINEP (Brasil)'};
+        if (n.includes('fundação oswaldo') || n.includes('fiocruz')) return {cat:'SUR',abbr:'FIOCRUZ',label:'Fiocruz (Brasil)'};
+        if (n.includes('conacyt') || n.includes('conahcyt')) return {cat:'SUR',abbr:'CONACYT',label:'CONAHCYT (México)'};
+        if (n.includes('colciencias') || n.includes('minciencias') || (n.includes('ministerio de ciencias') && n.includes('colombia'))) return {cat:'SUR',abbr:'MINCIEN',label:'MinCiencias (Colombia)'};
+        if (n.includes('fondecyt') || n.includes('fondap') || (n.includes('anid') && !n.includes('canada'))) return {cat:'SUR',abbr:'FONDECYT',label:'FONDECYT (Chile)'};
+        if (n.includes('conicet')) return {cat:'SUR',abbr:'CONICET',label:'CONICET (Argentina)'};
+        if (n.includes('agencia nacional de promoción') && n.includes('argentina')) return {cat:'SUR',abbr:'AGENCIA_AR',label:'Agencia I+D+i (Argentina)'};
+        if (n.includes('concytec')) return {cat:'SUR',abbr:'CONCYTEC',label:'CONCYTEC (Perú)'};
+        if (n.includes('senescyt')) return {cat:'SUR',abbr:'SENESCYT',label:'SENESCYT (Ecuador)'};
+
+        // ─── Sur · Africa ───
+        if ((n.includes('national research foundation') || /\bnrf\b/.test(n)) && n.includes('south africa')) return {cat:'SUR',abbr:'NRF_ZA',label:'NRF (Sudáfrica)'};
+        if (n.includes('south african medical') || /\bsamrc\b/.test(n)) return {cat:'SUR',abbr:'SAMRC',label:'SAMRC (Sudáfrica)'};
+        if (n.includes('african academy of sciences') || n.includes('academy of science for the developing world')) return {cat:'SUR',abbr:'AAS',label:'AAS (África)'};
+
+        // ─── Sur · Asia ───
+        if ((n.includes('department of biotechnology') || /\bdbt\b/.test(n)) && (n.includes('india') || n.includes('indian'))) return {cat:'SUR',abbr:'DBT_IN',label:'DBT (India)'};
+        if ((n.includes('department of science and technology') || /\bdst\b/.test(n)) && (n.includes('india') || n.includes('indian'))) return {cat:'SUR',abbr:'DST_IN',label:'DST (India)'};
+        if (n.includes('indian council of medical') || /\bicmr\b/.test(n)) return {cat:'SUR',abbr:'ICMR',label:'ICMR (India)'};
+        if ((n.includes('council of scientific and industrial research') || /\bcsir\b/.test(n)) && (n.includes('india') || n.includes('indian'))) return {cat:'SUR',abbr:'CSIR_IN',label:'CSIR (India)'};
+        if (n.includes('science and engineering research board') || /\bserb\b/.test(n)) return {cat:'SUR',abbr:'SERB_IN',label:'SERB (India)'};
+        if (n.includes('ministry of education') && n.includes('india')) return {cat:'SUR',abbr:'MOE_IN',label:'Min. Educación (India)'};
+        if (n.includes('ministry of science and technology') && (n.includes('indonesia') || n.includes('thai') || n.includes('vietnam') || n.includes('philippine') || n.includes('bangladesh') || n.includes('pakistan'))) return {cat:'SUR',abbr:'MOI_SEA',label:'Min. Ciencia (Asia SE)'};
+
+        return null; // unknown
+    }
+
+    function isNorte(cat) { return ['USA','UK','EU','OTRO_N'].includes(cat); }
+    function isSur(cat)   { return cat === 'SUR'; }
+    function isChina(cat) { return cat === 'CHINA'; }
+
+    const CAT_COLOR = {
+        USA:    '#ff3333',
+        UK:     '#ff6622',
+        EU:     '#ffcc00',
+        OTRO_N: '#ff9900',
+        CHINA:  '#bb44ff',
+        SUR:    '#00ff41',
+    };
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // STATE
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    let allWorks = [];        // raw works (all regions)
+    let activeRegion = 'TODOS';
+    let activeWeight = 'papers'; // 'papers' | 'citas'
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // LOGGING
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function log(msg, cls='') {
+        const p = document.createElement('p');
+        p.className = 'log-line' + (cls?' '+cls:'');
+        p.textContent = '> ' + msg;
+        document.getElementById('progress-log').appendChild(p);
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // DNA RAIN CANVAS
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function startDnaRain() {
+        const canvas = document.getElementById('dna-canvas');
+        const ctx    = canvas.getContext('2d');
+        function resize() { canvas.width = window.innerWidth; canvas.height = 160; }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const CHARS = 'ATCGATCGATCG01';
+        let cols = [], drops = [];
+
+        function init() {
+            const fs  = 14;
+            const num = Math.floor(canvas.width / fs);
+            cols  = Array(num).fill(fs);
+            drops = Array.from({length:num}, () => Math.random() * -20);
+        }
+        init();
+        window.addEventListener('resize', init);
+
+        return setInterval(() => {
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = '14px VT323, monospace';
+            drops.forEach((y, i) => {
+                const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
+                ctx.fillText(ch, i * 14, y * 14);
+                drops[i] = (y * 14 > canvas.height && Math.random() > 0.975) ? 0 : y + 1;
+            });
+        }, 50);
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // API
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    async function fetchRegion(rkey) {
+        const r   = REGION_DEF[rkey];
+        const url = `${BASE}/works?filter=concepts.id:${CONCEPT},institutions.country_code:${r.countries},publication_year:2018-2024&select=id,funders,awards,cited_by_count,authorships,publication_year&sort=cited_by_count:desc&per-page=200&${MAILTO}`;
+        log(`Consultando ${r.full}...`);
+        const res  = await fetch(url);
+        const data = await res.json();
+        const n = data.results ? data.results.length : 0;
+        log(`  ${r.label}: ${n} papers recuperados (total BD: ${data.meta?.count?.toLocaleString('es-ES') || '?'})`);
+        return (data.results || []).map(w => ({ ...w, _region: rkey }));
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PROCESS
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function extractFunders(work) {
+        const seen = new Set();
+        const result = [];
+
+        // Awards are the most reliable source
+        (work.awards || []).forEach(a => {
+            const name = a.funder_display_name;
+            if (name && !seen.has(name)) {
+                seen.add(name);
+                const c = classifyFunder(name);
+                if (c) result.push(c);
+            }
+        });
+
+        // If no awards, use funders field if it looks clean (<= 30 entries)
+        if (result.length === 0) {
+            const funders = work.funders || [];
+            if (funders.length > 0 && funders.length <= 30) {
+                funders.forEach(f => {
+                    const name = f.display_name;
+                    if (name && !seen.has(name)) {
+                        seen.add(name);
+                        const c = classifyFunder(name);
+                        if (c) result.push(c);
+                    }
+                });
+            }
+        }
+
+        return result;
+    }
+
+    function getSouthCountries(work) {
+        const cc = new Set();
+        (work.authorships || []).forEach(a => {
+            (a.countries || []).forEach(c => {
+                const lc = c.toLowerCase();
+                if (SOUTH_CC.has(lc)) cc.add(lc);
+            });
+        });
+        return [...cc];
+    }
+
+    function processWorks(works) {
+        // Aggregate for whole dataset
+        const funderMap  = {};   // label → { cat, abbr, label, papers, citas }
+        const countryMap = {};   // cc   → { name, region, papers, norteP, surP, chinaP, topNorteFunder, topNorteCount }
+
+        let totalPapers  = works.length;
+        let withData     = 0;
+        let norteCount   = 0;
+        let surCount     = 0;
+
+        works.forEach(work => {
+            const cited    = work.cited_by_count || 0;
+            const funders  = extractFunders(work);
+            const hasData  = funders.length > 0;
+            if (hasData) withData++;
+
+            const hasNorte = funders.some(f => isNorte(f.cat));
+            const hasSur   = funders.some(f => isSur(f.cat));
+            const hasChina = funders.some(f => isChina(f.cat));
+
+            if (hasData) {
+                if (hasNorte) norteCount++;
+                else if (hasSur) surCount++;
+            }
+
+            // Funder aggregation
+            const seenLabels = new Set();
+            funders.forEach(f => {
+                if (!seenLabels.has(f.label)) {
+                    seenLabels.add(f.label);
+                    if (!funderMap[f.label]) funderMap[f.label] = { ...f, papers:0, citas:0 };
+                    funderMap[f.label].papers++;
+                    funderMap[f.label].citas += cited;
+                }
+            });
+
+            // Country aggregation (only South countries)
+            const countries = getSouthCountries(work);
+            countries.forEach(cc => {
+                if (!countryMap[cc]) {
+                    countryMap[cc] = {
+                        name: COUNTRY_NAMES[cc] || cc.toUpperCase(),
+                        region: [...Object.entries(REGION_DEF)].find(([,v]) => v.countries.split('|').includes(cc))?.[0] || '?',
+                        papers:0, withData:0, norteP:0, surP:0, chinaP:0,
+                        norteFunders: {}
+                    };
+                }
+                countryMap[cc].papers++;
+                if (hasData) countryMap[cc].withData++;
+                if (hasNorte) {
+                    countryMap[cc].norteP++;
+                    funders.filter(f => isNorte(f.cat)).forEach(f => {
+                        countryMap[cc].norteFunders[f.label] = (countryMap[cc].norteFunders[f.label]||0) + 1;
+                    });
+                }
+                if (hasSur)   countryMap[cc].surP++;
+                if (hasChina) countryMap[cc].chinaP++;
+            });
+        });
+
+        return { totalPapers, withData, norteCount, surCount, funderMap, countryMap };
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // FILTER HELPERS
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function getFilteredWorks() {
+        if (activeRegion === 'TODOS') return allWorks;
+        return allWorks.filter(w => w._region === activeRegion);
+    }
+
+    function switchRegion(r, btn) {
+        activeRegion = r;
+        document.querySelectorAll('.rfbtn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderAll();
+    }
+
+    function switchWeight(w, btn) {
+        activeWeight = w;
+        document.querySelectorAll('.wbtn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderFunderBars(currentStats);
+    }
+
+    let currentStats = null;
+
+    function renderAll() {
+        const works = getFilteredWorks();
+        if (!works.length) {
+            document.getElementById('no-data-banner').style.display = 'block';
+            return;
+        }
+        document.getElementById('no-data-banner').style.display = 'none';
+
+        const stats = processWorks(works);
+        currentStats = stats;
+
+        renderBanner(stats);
+        renderStatsStrip(stats);
+        renderDonut(stats);
+        renderFunderBars(stats);
+        renderCountryTable(stats);
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // RENDER COMPONENTS
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function renderBanner({ withData, norteCount, surCount }) {
+        const norte = withData ? Math.round(norteCount / withData * 100) : 0;
+        const el = document.getElementById('alert-banner');
+        el.innerHTML = `
+            ■ <strong>${norte}%</strong> de los papers genómicos del Sur Global
+            con datos de financiamiento son financiados por instituciones del Norte Global
+            (NIH, Wellcome Trust, Gates Foundation, EU Horizon…)<br>
+            <span style="font-size:.85rem;color:#ff9900;">
+            Solo <strong>${withData > 0 ? Math.round(surCount/withData*100) : 0}%</strong>
+            está financiado exclusivamente por fondos soberanos del Sur.
+            El resto carece de metadatos de financiamiento o proviene de fuentes mixtas.
+            </span>`;
+    }
+
+    function renderStatsStrip({ totalPapers, withData, norteCount, surCount }) {
+        document.getElementById('st-total').textContent   = totalPapers.toLocaleString('es-ES');
+        document.getElementById('st-funded').textContent  = withData.toLocaleString('es-ES');
+        const norteP = withData ? Math.round(norteCount/withData*100) : 0;
+        const surP   = withData ? Math.round(surCount/withData*100) : 0;
+        document.getElementById('st-norte-pct').textContent = norteP + '%';
+        document.getElementById('st-sur-pct').textContent   = surP  + '%';
+    }
+
+    function renderDonut({ withData, norteCount, surCount }) {
+        const svg    = d3.select('#donut-svg');
+        const W = 240, H = 240, R = 100, Ri = 62;
+        svg.selectAll('*').remove();
+        svg.attr('viewBox', `0 0 ${W} ${H}`);
+
+        const chinaCount = 0; // aggregated separately if needed
+        const other = Math.max(0, withData - norteCount - surCount);
+
+        const data = [
+            { label:'NORTE', value:norteCount, color:'#ff3333' },
+            { label:'SUR',   value:surCount,   color:'#00ff41' },
+            { label:'MIXTO/OTRO', value:other, color:'#444' },
+        ].filter(d => d.value > 0);
+
+        if (!data.length) return;
+
+        const pie  = d3.pie().value(d => d.value).sort(null);
+        const arc  = d3.arc().innerRadius(Ri).outerRadius(R);
+        const arcH = d3.arc().innerRadius(Ri).outerRadius(R+8);
+        const g    = svg.append('g').attr('transform',`translate(${W/2},${H/2})`);
+
+        const paths = g.selectAll('path')
+            .data(pie(data))
+            .join('path')
+            .attr('fill', d => d.data.color)
+            .attr('stroke', '#000')
+            .attr('stroke-width', 2)
+            .style('filter', d => isNorte(d.data.cat) ? 'drop-shadow(0 0 4px #ff3333)' : d.data.color === '#00ff41' ? 'drop-shadow(0 0 4px #00ff41)' : 'none')
+            .on('mouseover', function(e, d) { d3.select(this).attr('d', arcH(d)); })
+            .on('mouseout',  function(e, d) { d3.select(this).attr('d', arc(d));  });
+
+        // Animate
+        paths.attr('d', d => {
+            const i = d3.interpolate({ startAngle:0, endAngle:0 }, d);
+            return arc(i(0));
+        }).transition().duration(900).attrTween('d', d => {
+            const i = d3.interpolate({ startAngle: d.startAngle, endAngle: d.startAngle }, d);
+            return t => arc(i(t));
+        });
+
+        // Center text
+        const norteP = withData ? Math.round(norteCount/withData*100) : 0;
+        g.append('text').attr('text-anchor','middle').attr('dy','-0.1em')
+            .attr('fill','#ff3333').attr('font-family','VT323,monospace').attr('font-size','2.8rem')
+            .text(norteP + '%');
+        g.append('text').attr('text-anchor','middle').attr('dy','1.4em')
+            .attr('fill','rgba(0,143,17,.7)').attr('font-family','VT323,monospace').attr('font-size','1rem')
+            .text('NORTE');
+
+        // Legend
+        const leg = document.getElementById('donut-legend');
+        leg.innerHTML = '';
+        data.forEach(d => {
+            const pct = withData ? Math.round(d.value/withData*100) : 0;
+            leg.innerHTML += `
+                <div class="legend-row">
+                    <div class="legend-dot" style="background:${d.color}"></div>
+                    <span class="legend-label">${d.label}</span>
+                    <span class="legend-val">${pct}% · ${d.value} papers</span>
+                </div>`;
+        });
+    }
+
+    function renderFunderBars(stats) {
+        if (!stats) return;
+        const { funderMap } = stats;
+        const key = activeWeight === 'citas' ? 'citas' : 'papers';
+        const entries = Object.values(funderMap)
+            .sort((a,b) => b[key] - a[key])
+            .slice(0, 20);
+
+        if (!entries.length) { document.getElementById('funder-bars').innerHTML = '<p style="color:var(--phosphor-dim)">Sin datos de financiamiento en este filtro.</p>'; return; }
+
+        const max = entries[0][key];
+        const h2  = document.querySelector('#funders-panel h2');
+        h2.textContent = `TOP FINANCIADORES (por ${key === 'citas' ? 'citas ponderadas' : 'papers'})`;
+
+        const html = entries.map(f => {
+            const w    = Math.round(f[key] / max * 100);
+            const col  = CAT_COLOR[f.cat] || '#555';
+            const isS  = isSur(f.cat);
+            const badge = isS ? '<span style="color:var(--phosphor-main);font-size:.75rem"> [SUR]</span>' : '';
+            return `
+            <div class="fbar-row">
+                <span class="fbar-name" title="${f.label}" style="color:${col}">${f.label}${badge}</span>
+                <div class="fbar-track">
+                    <div class="fbar-fill" style="width:${w}%;background:${col}"></div>
+                </div>
+                <span class="fbar-count" style="color:${col}">${f[key].toLocaleString('es-ES')}</span>
+            </div>`;
+        }).join('');
+
+        document.getElementById('funder-bars').innerHTML = html;
+    }
+
+    function renderCountryTable({ countryMap }) {
+        const rows = Object.entries(countryMap)
+            .filter(([, v]) => v.withData > 0)
+            .sort(([, a], [, b]) => {
+                const pA = a.withData ? a.norteP / a.withData : 0;
+                const pB = b.withData ? b.norteP / b.withData : 0;
+                return pB - pA;
+            });
+
+        const tbody = document.getElementById('country-tbody');
+        tbody.innerHTML = '';
+
+        rows.forEach(([cc, v]) => {
+            const depP = v.withData ? Math.round(v.norteP / v.withData * 100) : 0;
+            const depCls = depP >= 70 ? 'high' : depP >= 40 ? 'mid' : 'low';
+
+            const topFunder = Object.entries(v.norteFunders)
+                .sort(([,a],[,b]) => b-a)[0];
+            const topLabel = topFunder ? topFunder[0] : '—';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="color:var(--phosphor-main)">${v.name}</td>
+                <td style="color:var(--phosphor-dim);font-size:.85rem">${v.region}</td>
+                <td>${v.papers}</td>
+                <td>
+                    <div class="dep-bar-wrap" style="width:120px">
+                        <div class="dep-bar-fill" style="width:${depP}%"></div>
+                    </div>
+                </td>
+                <td class="dep-pct ${depCls}">${depP}%</td>
+                <td style="font-size:.85rem;color:var(--phosphor-dim)">${topLabel}</td>`;
+            tbody.appendChild(tr);
+        });
+
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="color:var(--phosphor-dim);padding:1rem">Sin datos suficientes para esta selección.</td></tr>';
+        }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // INIT
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function updateClock() {
+        document.getElementById('clock').textContent =
+            new Date().toLocaleTimeString('es-ES', { hour12:false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    async function init() {
+        const rainTimer = startDnaRain();
+
+        log('Concepto objetivo: Genomics [OpenAlex C2522767166]');
+        log('Período: 2018–2024 · top 200 papers citados por región');
+        log('Fuente: api.openalex.org [CC0 / abierto]');
+        log('');
+
+        let works = [];
+        try {
+            // Parallel fetch of all 3 regions
+            const [lac, afr, asia] = await Promise.all([
+                fetchRegion('LAC'),
+                fetchRegion('AFRICA'),
+                fetchRegion('ASIA')
+            ]);
+            works = [...lac, ...afr, ...asia];
+
+            // Deduplicate by OpenAlex ID
+            const seen = new Set();
+            works = works.filter(w => {
+                if (seen.has(w.id)) return false;
+                seen.add(w.id);
+                return true;
+            });
+
+            log('');
+            log(`Total papers únicos: ${works.length}`);
+            log('Clasificando fuentes de financiamiento...', 'warn');
+
+            // Count funder coverage
+            const withAwards  = works.filter(w => (w.awards||[]).length > 0).length;
+            const withFunders = works.filter(w => (w.funders||[]).length > 0 && (w.funders||[]).length <= 30).length;
+            log(`  Papers con metadatos de financiamiento: ${withAwards + withFunders}`);
+
+            // Process
+            allWorks = works;
+            const stats = processWorks(works);
+
+            log('');
+            const norteP = stats.withData ? Math.round(stats.norteCount / stats.withData * 100) : 0;
+            log(`ÍNDICE DE DEPENDENCIA NORTE: ${norteP}%`, 'alert');
+
+            log('');
+            log('Cargando visualización...', 'ok');
+
+            await new Promise(r => setTimeout(r, 600));
+
+        } catch (err) {
+            log(`ERROR: ${err.message}`, 'alert');
+            log('Comprobando conexión a api.openalex.org...', 'warn');
+            allWorks = [];
+        }
+
+        // Transition
+        clearInterval(rainTimer);
+        document.getElementById('loading-state').style.display = 'none';
+        const mv = document.getElementById('main-view');
+        mv.style.display = 'flex';
+
+        if (allWorks.length > 0) {
+            renderAll();
+        } else {
+            document.getElementById('alert-banner').innerHTML =
+                '⚠ No se pudieron cargar datos. Verifica conexión a internet e intenta de nuevo.';
+        }
+    }
+
+    init();
+    </script>
+</body>
+</html>
